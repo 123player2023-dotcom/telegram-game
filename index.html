@@ -527,4 +527,660 @@
                 <h2 style="font-size: 17px; margin-bottom: 4px;" id="case-title">Подарочный кейс</h2>
                 <p style="font-size: 11px; color: #a1a1aa; margin-bottom: 8px;" id="case-desc">Испытай удачу и выиграй эксклюзивный подарок!</p>
                 
-                <div class="
+                <div class="roulette-container">
+                    <div class="roulette-pointer"></div>
+                    <div class="roulette-track" id="roulette-track"></div>
+                </div>
+
+                <button class="btn" id="spin-btn" onclick="startSpin()">Крутить (25 ⭐)</button>
+            </div>
+        </div>
+
+        <!-- Inventory Screen -->
+        <div class="screen" id="screen-inventory">
+            <h2 style="margin-bottom: 12px; font-size: 18px;">Ваш инвентарь</h2>
+            <div class="inventory-grid" id="inventory-grid">
+                <div class="empty-inv">Инвентарь пока пуст. Откройте кейс!</div>
+            </div>
+        </div>
+
+        <!-- Profile Screen -->
+        <div class="screen" id="screen-profile">
+            <div class="profile-card">
+                <h2 style="font-size: 17px; margin-bottom: 4px;">👤 Профиль игрока</h2>
+                
+                <div class="input-group">
+                    <label>Telegram ID</label>
+                    <div class="input-row">
+                        <input type="text" id="profile-id-input" readonly>
+                        <button class="copy-btn" onclick="copyToClipboard('profile-id-input')">📋</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Имя пользователя</label>
+                    <div class="input-row">
+                        <input type="text" id="profile-name-input" placeholder="Введите имя">
+                        <button class="copy-btn" onclick="copyToClipboard('profile-name-input')">📋</button>
+                    </div>
+                </div>
+
+                <button class="btn" onclick="saveProfile()">Сохранить имя</button>
+                
+                <div onclick="openExternalUrl('https://t.me/frickhaus')" class="link-btn">💬 Написать в техподдержку</div>
+                
+                <div onclick="requestAdminAuth()" class="admin-btn">⚙️ Панель Администратора</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <button class="nav-btn active" onclick="switchScreen('main', this)">
+            <span class="icon">🎁</span>Кейсы
+        </button>
+        <button class="nav-btn" onclick="switchScreen('inventory', this)">
+            <span class="icon">
+                🎒
+                <div class="badge-dot" id="inventory-badge"></div>
+            </span>Инвентарь
+        </button>
+        <button class="nav-btn" onclick="switchScreen('profile', this)">
+            <span class="icon">👤</span>Профиль
+        </button>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="result-modal">
+        <div class="modal-card">
+            <div class="modal-close-cross" onclick="closeModal()">✖</div>
+            <div class="modal-icon" id="modal-icon">🎁</div>
+            <div class="modal-title" id="modal-title">Поздравляем!</div>
+            <div class="modal-desc" id="modal-desc">Вы выиграли подарок!</div>
+            <button class="btn" id="modal-action-btn" onclick="closeModal()">Забрать в инвентарь</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="deposit-modal">
+        <div class="modal-card">
+            <div class="modal-close-cross" onclick="closeDepositModal()">✖</div>
+            <div class="modal-title">Пополнение баланса</div>
+            <div class="modal-desc">Выберите удобный способ:</div>
+
+            <div class="deposit-options" id="deposit-options-list">
+                <button class="deposit-option-btn" onclick="selectDeposit('sbp')">💳 Оплата через СБП</button>
+                <button class="deposit-option-btn" onclick="selectDeposit('stars')">⭐ Звездочки TG</button>
+            </div>
+
+            <div class="deposit-info-box" id="deposit-info-box"></div>
+
+            <button class="close-btn" onclick="closeDepositModal()">Закрыть</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal-card">
+            <div class="modal-close-cross" onclick="closeConfirmModal()">✖</div>
+            <div class="modal-title" id="confirm-title">Подтверждение</div>
+            <div class="modal-desc" id="confirm-desc">Вы уверены?</div>
+            <div class="modal-buttons" id="confirm-buttons-container">
+                <button class="close-btn" onclick="closeConfirmModal()">Отмена</button>
+                <button class="btn" id="confirm-action-btn">Да</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="admin-auth-modal">
+        <div class="modal-card">
+            <div class="modal-close-cross" onclick="closeAdminAuthModal()">✖</div>
+            <div class="modal-title" style="color: #ef4444;">🔒 Доступ ограничен</div>
+            <div class="modal-desc">Введите пароль администратора:</div>
+
+            <div class="input-group" style="margin-bottom: 12px;">
+                <input type="password" id="admin-pass-input" placeholder="Пароль..." style="text-align: center;">
+            </div>
+
+            <button class="btn" onclick="verifyAdminPass()" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">Войти</button>
+            <button class="close-btn" onclick="closeAdminAuthModal()" style="margin-top: 8px;">Отмена</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="admin-modal">
+        <div class="modal-card">
+            <div class="modal-close-cross" onclick="closeAdminModal()">✖</div>
+            <div class="modal-title" style="color: #ef4444;">⚙️ Админ Панель</div>
+            <div class="modal-desc">Выдача Звездочек (⭐)</div>
+
+            <div class="input-group" style="margin-bottom: 8px;">
+                <label>Telegram ID пользователя</label>
+                <input type="text" id="admin-target-id" placeholder="Например: 849201948">
+            </div>
+
+            <div class="input-group" style="margin-bottom: 12px;">
+                <label>Количество звездочек</label>
+                <input type="number" id="admin-stars-amount" placeholder="Например: 100">
+            </div>
+
+            <button class="btn" onclick="adminGrantStars()" style="background: linear-gradient(135deg, #ef4444, #f59e0b); margin-bottom: 8px;">Выдать звездочки</button>
+            <button class="close-btn" onclick="adminSelfAddStars()" style="border-color: #8b5cf6; color: #a78bfa;">+1000 ⭐ Себе</button>
+            <button class="close-btn" onclick="closeAdminModal()" style="margin-top: 8px;">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Безопасная инициализация Telegram WebApp с защитой от зависания в браузере
+    const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+    if (tg) {
+        try {
+            tg.ready();
+            tg.expand();
+        } catch (e) {
+            console.log('WebApp error:', e);
+        }
+    }
+
+    const WITHDRAW_CHANNEL_URL = "https://t.me/givegiftfast";
+    const SUPPORT_URL = "https://t.me/frickhaus";
+    
+    const ADMIN_PASSWORD = "VLAD245FRICK929HAUS868BEZBELETNIK34";
+    const ADMIN_SECRET_CODE = "VLAD245FRICK929HAUS868BEZBELETNIK34";
+
+    const PRICE_MAP = {
+        'bear': 15,
+        'heart': 15,
+        'gift': 25,
+        'champagne': 50,
+        'rocket': 50,
+        'ring': 100,
+        'rose': 25
+    };
+
+    function getItemPrice(item) {
+        if (!item) return 0;
+        if (item.sellPrice && !isNaN(item.sellPrice)) return item.sellPrice;
+        return PRICE_MAP[item.id] || 0;
+    }
+
+    function getSessionKey() {
+        if (tg?.initDataUnsafe?.user?.id) {
+            return 'tg_' + tg.initDataUnsafe.user.id;
+        }
+        const urlParams = new URLSearchParams(window.location.search);
+        let uid = urlParams.get('uid');
+        if (!uid) {
+            uid = 'usr_' + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?uid=' + uid;
+            window.history.replaceState({path: newUrl}, '', newUrl);
+        }
+        return uid;
+    }
+
+    const sessionKey = getSessionKey();
+
+    function getStorage(key, defaultVal) {
+        const val = localStorage.getItem(`${sessionKey}_${key}`);
+        if (val === null || val === undefined) return defaultVal;
+        try {
+            const parsed = JSON.parse(val);
+            return (parsed !== null && !isNaN(parsed)) ? parsed : defaultVal;
+        } catch(e) {
+            return defaultVal;
+        }
+    }
+
+    function setStorage(key, val) {
+        localStorage.setItem(`${sessionKey}_${key}`, JSON.stringify(val));
+    }
+
+    let stars = parseInt(getStorage('stars', 50));
+    if (isNaN(stars)) stars = 50;
+
+    let inventory = getStorage('inventory', []);
+    
+    let defaultUsername = tg?.initDataUnsafe?.user?.first_name || 'Игрок Telegram';
+    let defaultUserId = tg?.initDataUnsafe?.user?.id?.toString() || Math.floor(100000000 + Math.random() * 900000000).toString();
+
+    let username = getStorage('username', defaultUsername);
+    let userId = getStorage('userId', defaultUserId);
+    let hasNewItems = getStorage('hasNewItems', false);
+    let lastFreeSpin = parseInt(getStorage('lastFreeSpin', 0));
+
+    setStorage('stars', stars);
+    setStorage('inventory', inventory);
+    setStorage('username', username);
+    setStorage('userId', userId);
+
+    document.getElementById('user-stars').innerText = stars;
+    document.getElementById('profile-name-input').value = username;
+    document.getElementById('profile-id-input').value = userId;
+    document.getElementById('header-username').innerText = `🎁 ${username}`;
+    
+    if (hasNewItems) {
+        document.getElementById('inventory-badge').classList.add('active');
+    }
+
+    const items = [
+        { id: 'nothing', name: 'Ничего', icon: '❄️', type: 'nothing', sellPrice: 0 },
+        { id: 'bear', name: 'Мишка', icon: '🧸', type: 'item', sellPrice: 15 },
+        { id: 'heart', name: 'Сердечко', icon: '💖', type: 'item', sellPrice: 15 },
+        { id: 'gift', name: 'Подарочек', icon: '🎁', type: 'item', sellPrice: 25 },
+        { id: 'champagne', name: 'Шампанское', icon: '🍾', type: 'item', sellPrice: 50 },
+        { id: 'rocket', name: 'Ракета', icon: '🚀', type: 'item', sellPrice: 50 },
+        { id: 'ring', name: 'Кольцо', icon: '💍', type: 'item', sellPrice: 100 },
+        { id: 'rose', name: 'Роза', icon: '🌹', type: 'item', sellPrice: 25 }
+    ];
+
+    let currentMode = 'paid';
+
+    function switchRouletteMode(mode) {
+        if (isSpinning) return;
+        currentMode = mode;
+        
+        document.getElementById('tab-paid').classList.remove('active');
+        document.getElementById('tab-free').classList.remove('active');
+        
+        const spinBtn = document.getElementById('spin-btn');
+        const caseTitle = document.getElementById('case-title');
+        const caseDesc = document.getElementById('case-desc');
+
+        if (mode === 'paid') {
+            document.getElementById('tab-paid').classList.add('active');
+            caseTitle.innerText = 'Подарочный кейс';
+            caseDesc.innerText = 'Испытай удачу и выиграй эксклюзивный подарок!';
+            spinBtn.innerText = 'Крутить (25 ⭐)';
+            spinBtn.disabled = (stars < 25);
+        } else {
+            document.getElementById('tab-free').classList.add('active');
+            caseTitle.innerText = 'Бесплатный кейс (FREE)';
+            caseDesc.innerText = 'Доступно 1 раз в 24 часа!';
+            checkFreeSpinTimer();
+        }
+
+        buildNewTrack();
+    }
+
+    function checkFreeSpinTimer() {
+        const now = Date.now();
+        const cooldown = 24 * 60 * 60 * 1000;
+        const spinBtn = document.getElementById('spin-btn');
+
+        if (currentMode === 'free') {
+            if (now - lastFreeSpin < cooldown) {
+                const remaining = cooldown - (now - lastFreeSpin);
+                const hours = Math.floor(remaining / (1000 * 60 * 60));
+                const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                spinBtn.innerText = `Доступно через ${hours}ч ${minutes}м`;
+                spinBtn.disabled = true;
+            } else {
+                spinBtn.innerText = 'Крутить Бесплатно (FREE)';
+                spinBtn.disabled = false;
+            }
+        }
+    }
+
+    function getPaidRandomItem() {
+        const rand = Math.random() * 100;
+        if (rand < 62) return items[0];
+        if (rand < 76) return items[1];
+        if (rand < 88) return items[2];
+        if (rand < 94) return items[3];
+        if (rand < 97) return items[4];
+        if (rand < 99) return items[5];
+        return items[6];
+    }
+
+    function getFreeRandomItem() {
+        const rand = Math.random() * 100;
+        if (rand < 75) return items[0];
+        if (rand < 81.25) return items[1];
+        if (rand < 87.5) return items[2];
+        if (rand < 93.75) return items[3];
+        return items[7];
+    }
+
+    function getRandomItem() {
+        return currentMode === 'paid' ? getPaidRandomItem() : getFreeRandomItem();
+    }
+
+    const track = document.getElementById('roulette-track');
+    let trackItems = [];
+
+    function buildNewTrack() {
+        trackItems = [];
+        for (let i = 0; i < 50; i++) {
+            trackItems.push(getRandomItem());
+        }
+        renderTrack(trackItems);
+    }
+
+    function renderTrack(itemsList) {
+        track.innerHTML = '';
+        itemsList.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'roulette-item';
+            div.innerHTML = `${item.icon}<span class="label">${item.name}</span>`;
+            track.appendChild(div);
+        });
+    }
+    
+    buildNewTrack();
+
+    let isSpinning = false;
+
+    function startSpin() {
+        if (isSpinning) return;
+        
+        if (currentMode === 'paid') {
+            if (stars < 25) {
+                showNoStarsModal();
+                return;
+            }
+            stars -= 25;
+            setStorage('stars', stars);
+            document.getElementById('user-stars').innerText = stars;
+        } else {
+            const now = Date.now();
+            const cooldown = 24 * 60 * 60 * 1000;
+            if (now - lastFreeSpin < cooldown) {
+                showCustomConfirm('Ошибка', 'Бесплатный кейс будет доступен позже!', null);
+                return;
+            }
+            lastFreeSpin = now;
+            setStorage('lastFreeSpin', lastFreeSpin);
+        }
+
+        isSpinning = true;
+        document.getElementById('spin-btn').disabled = true;
+
+        const winningItem = getRandomItem();
+        
+        trackItems = [];
+        for (let i = 0; i < 50; i++) {
+            if (i === 40) {
+                trackItems.push(winningItem);
+            } else {
+                trackItems.push(getRandomItem());
+            }
+        }
+        renderTrack(trackItems);
+
+        const itemWidth = 85;
+        const containerWidth = document.querySelector('.roulette-container').offsetWidth;
+        const targetOffset = (40 * itemWidth) - (containerWidth / 2) + (itemWidth / 2);
+        const finalOffset = targetOffset + (Math.random() * 50 - 25);
+
+        track.style.transition = 'none';
+        track.style.transform = 'translateX(0px)';
+        track.offsetHeight;
+
+        track.style.transition = 'transform 8s cubic-bezier(0.1, 0.8, 0.2, 1)';
+        track.style.transform = `translateX(-${finalOffset}px)`;
+
+        setTimeout(() => {
+            isSpinning = false;
+            if (currentMode === 'paid') {
+                document.getElementById('spin-btn').disabled = (stars < 25);
+                document.getElementById('spin-btn').innerText = 'Крутить (25 ⭐)';
+            } else {
+                checkFreeSpinTimer();
+            }
+            showResultModal(winningItem);
+        }, 8050);
+    }
+
+    function showNoStarsModal() {
+        const modal = document.getElementById('confirm-modal');
+        document.getElementById('confirm-title').innerText = 'Недостаточно звезд';
+        document.getElementById('confirm-desc').innerText = 'Для прокрута требуется 25 ⭐. Пополните ваш баланс!';
+        
+        const btnContainer = document.getElementById('confirm-buttons-container');
+        btnContainer.innerHTML = `
+            <button class="close-btn" onclick="closeConfirmModal()">Закрыть</button>
+            <button class="btn" onclick="closeConfirmModal(); openDepositModal();">Пополнить</button>
+        `;
+
+        modal.style.display = 'flex';
+    }
+
+    function showResultModal(item) {
+        const modal = document.getElementById('result-modal');
+        const iconEl = document.getElementById('modal-icon');
+        const titleEl = document.getElementById('modal-title');
+        const descEl = document.getElementById('modal-desc');
+        const btnEl = document.getElementById('modal-action-btn');
+
+        iconEl.innerText = item.icon;
+        
+        if (item.type === 'nothing') {
+            titleEl.innerText = 'Увы, ничего!';
+            descEl.innerText = 'К сожалению, этот кейс оказался пустым.';
+            btnEl.innerText = 'Крутить еще раз';
+            btnEl.onclick = () => {
+                closeModal();
+                startSpin();
+            };
+        } else {
+            titleEl.innerText = 'Поздравляем!';
+            descEl.innerText = `Вы выиграли: ${item.name}!`;
+            btnEl.innerText = 'Забрать в инвентарь';
+            btnEl.onclick = () => {
+                inventory.push(item);
+                setStorage('inventory', inventory);
+                
+                hasNewItems = true;
+                setStorage('hasNewItems', true);
+                document.getElementById('inventory-badge').classList.add('active');
+
+                renderInventory();
+                closeModal();
+            };
+        }
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('result-modal').style.display = 'none';
+        document.getElementById('modal-action-btn').onclick = closeModal;
+    }
+
+    function switchScreen(screenId, btnElement) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+        document.getElementById(`screen-${screenId}`).classList.add('active');
+        btnElement.classList.add('active');
+
+        if (screenId === 'inventory') {
+            hasNewItems = false;
+            setStorage('hasNewItems', false);
+            document.getElementById('inventory-badge').classList.remove('active');
+            renderInventory();
+        }
+        if (screenId === 'main' && currentMode === 'free') {
+            checkFreeSpinTimer();
+        }
+    }
+
+    function renderInventory() {
+        const grid = document.getElementById('inventory-grid');
+        if (inventory.length === 0) {
+            grid.innerHTML = '<div class="empty-inv">Инвентарь пока пуст. Откройте кейс!</div>';
+            return;
+        }
+        grid.innerHTML = '';
+        inventory.forEach((item, index) => {
+            const price = getItemPrice(item);
+            const div = document.createElement('div');
+            div.className = 'inventory-item';
+            div.innerHTML = `
+                ${item.icon}
+                <span class="item-name">${item.name}</span>
+                <button class="withdraw-btn" onclick="withdrawGift(${index})">Вывести ↗</button>
+                <button class="sell-btn" onclick="sellGift(${index})">Продать (+${price}⭐)</button>
+            `;
+            grid.appendChild(div);
+        });
+    }
+
+    function withdrawGift(index) {
+        const item = inventory[index];
+        showCustomConfirm('Вывод предмета', `Для вывода "${item.name}" перейдите в наш канал @givegiftfast.`, () => {
+            openExternalUrl(WITHDRAW_CHANNEL_URL);
+        });
+    }
+
+    function sellGift(index) {
+        const item = inventory[index];
+        const price = getItemPrice(item);
+        showCustomConfirm('Продажа предмета', `Продать "${item.name}" за ${price} ⭐?`, () => {
+            stars += price;
+            setStorage('stars', stars);
+            document.getElementById('user-stars').innerText = stars;
+            
+            if (currentMode === 'paid') {
+                document.getElementById('spin-btn').disabled = (stars < 25);
+            }
+
+            inventory.splice(index, 1);
+            setStorage('inventory', inventory);
+            renderInventory();
+        });
+    }
+
+    function showCustomConfirm(title, desc, onConfirm) {
+        const modal = document.getElementById('confirm-modal');
+        document.getElementById('confirm-title').innerText = title;
+        document.getElementById('confirm-desc').innerText = desc;
+        
+        const btnContainer = document.getElementById('confirm-buttons-container');
+        btnContainer.innerHTML = `
+            <button class="close-btn" onclick="closeConfirmModal()">Отмена</button>
+            <button class="btn" id="confirm-action-btn">Да</button>
+        `;
+
+        const actionBtn = document.getElementById('confirm-action-btn');
+        actionBtn.onclick = () => {
+            closeConfirmModal();
+            if (onConfirm) onConfirm();
+        };
+
+        modal.style.display = 'flex';
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirm-modal').style.display = 'none';
+    }
+
+    function saveProfile() {
+        const nameInput = document.getElementById('profile-name-input').value.trim();
+        if (nameInput === ADMIN_SECRET_CODE) {
+            showCustomConfirm('Режим разработчика', 'Админ-панель открыта!', null);
+            document.getElementById('admin-modal').style.display = 'flex';
+            return;
+        }
+        if (nameInput) {
+            username = nameInput;
+            setStorage('username', username);
+            document.getElementById('header-username').innerText = `🎁 ${username}`;
+            showCustomConfirm('Успешно', 'Имя профиля сохранено!', null);
+        }
+    }
+
+    function copyToClipboard(elementId) {
+        const input = document.getElementById(elementId);
+        input.select();
+        input.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(input.value).then(() => {
+            showCustomConfirm('Скопировано!', `Значение "${input.value}" скопировано.`, null);
+        });
+    }
+
+    function requestAdminAuth() {
+        document.getElementById('admin-pass-input').value = '';
+        document.getElementById('admin-auth-modal').style.display = 'flex';
+    }
+
+    function closeAdminAuthModal() {
+        document.getElementById('admin-auth-modal').style.display = 'none';
+    }
+
+    function verifyAdminPass() {
+        const pass = document.getElementById('admin-pass-input').value;
+        if (pass === ADMIN_PASSWORD) {
+            closeAdminAuthModal();
+            document.getElementById('admin-modal').style.display = 'flex';
+        } else {
+            closeAdminAuthModal();
+            showCustomConfirm('Ошибка', 'Неверный пароль администратора!', null);
+        }
+    }
+
+    function closeAdminModal() {
+        document.getElementById('admin-modal').style.display = 'none';
+    }
+
+    function adminGrantStars() {
+        const targetId = document.getElementById('admin-target-id').value.trim();
+        const amount = parseInt(document.getElementById('admin-stars-amount').value);
+
+        if (!targetId || isNaN(amount) || amount <= 0) {
+            showCustomConfirm('Ошибка', 'Введите корректный Telegram ID и количество.', null);
+            return;
+        }
+
+        if (targetId === userId) {
+            stars += amount;
+            setStorage('stars', stars);
+            document.getElementById('user-stars').innerText = stars;
+            if (currentMode === 'paid') {
+                document.getElementById('spin-btn').disabled = (stars < 25);
+            }
+            showCustomConfirm('Успешно!', `Зачислено +${amount} ⭐`, null);
+        } else {
+            showCustomConfirm('Запрос отправлен', `Перечислено ${amount} ⭐ на ID: ${targetId}`, null);
+        }
+        closeAdminModal();
+    }
+
+    function adminSelfAddStars() {
+        stars += 1000;
+        setStorage('stars', stars);
+        document.getElementById('user-stars').innerText = stars;
+        if (currentMode === 'paid') {
+            document.getElementById('spin-btn').disabled = (stars < 25);
+        }
+        showCustomConfirm('Админ-баланс', 'Начислено +1000 ⭐!', null);
+        closeAdminModal();
+    }
+
+    function openDepositModal() {
+        document.getElementById('deposit-info-box').style.display = 'none';
+        document.getElementById('deposit-modal').style.display = 'flex';
+    }
+
+    function closeDepositModal() {
+        document.getElementById('deposit-modal').style.display = 'none';
+    }
+
+    function selectDeposit(type) {
+        const box = document.getElementById('deposit-info-box');
+        box.style.display = 'block';
+        if (type === 'sbp') {
+            box.innerHTML = 'Для оплаты через СБП напишите в поддержку<br><span class="deposit-link-clickable" onclick="openExternalUrl(\'' + SUPPORT_URL + '\')">👉 Написать (@frickhaus)</span>';
+        } else if (type === 'stars') {
+            box.innerHTML = 'Напишите для пополнения звездочками<br><span class="deposit-link-clickable" onclick="openExternalUrl(\'' + SUPPORT_URL + '\')">👉 Написать (@frickhaus)</span>';
+        }
+    }
+
+    function openExternalUrl(url) {
+        if (tg?.openTelegramLink) {
+            tg.openTelegramLink(url);
+        } else {
+            window.open(url, '_blank');
+        }
+    }
+</script>
+
+</body>
+</html>
