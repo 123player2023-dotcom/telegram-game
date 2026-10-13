@@ -730,6 +730,79 @@
 </div>
 
 <script>
+    // --- ЗВУКОВОЙ ДВИЖОК (Web Audio API) ---
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    // Звук мягкого клика по кнопкам
+    function playClickSound() {
+        try {
+            initAudio();
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(450, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.04);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.04);
+        } catch(e) {}
+    }
+
+    // Тактильный механический щелчок рулетки
+    function playTickSound() {
+        try {
+            initAudio();
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square'; // Квадратная волна дает отчетливый «щелкающий» акцент
+            osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.015);
+            gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.015);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.015);
+        } catch(e) {}
+    }
+
+    // Звук победы
+    function playWinSound() {
+        try {
+            initAudio();
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(659.25, now + 0.1);
+            osc.frequency.setValueAtTime(783.99, now + 0.2);
+            osc.frequency.setValueAtTime(1046.50, now + 0.3);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.6);
+        } catch(e) {}
+    }
+
+
     // Эмуляция Telegram WebApp для локального теста
     const tg = window.Telegram?.WebApp || {
         initDataUnsafe: {
@@ -791,7 +864,6 @@
     let hasNewItems = getStorage('hasNewItems', false);
     let lastFreeSpin = parseInt(getStorage('lastFreeSpin', 0));
 
-    // Реферальная система
     let refCount = parseInt(getStorage('refCount', 0));
     let refEarned = parseInt(getStorage('refEarned', 0));
     let hasSpinned = getStorage('hasSpinned', false);
@@ -840,6 +912,7 @@
     let currentMode = 'paid';
 
     function switchRouletteMode(mode) {
+        playClickSound();
         if (isSpinning) return;
         currentMode = mode;
         
@@ -935,6 +1008,7 @@
     let isSpinning = false;
 
     function startSpin() {
+        playClickSound();
         if (isSpinning) return;
         
         if (currentMode === 'paid') {
@@ -989,11 +1063,29 @@
         track.style.transform = 'translateX(0px)';
         track.offsetHeight;
 
-        track.style.transition = 'transform 8s cubic-bezier(0.1, 0.8, 0.2, 1)';
+        // Быстрая анимация за 3.5 секунды
+        const spinDuration = 3500;
+        track.style.transition = `transform ${spinDuration}ms cubic-bezier(0.15, 0.85, 0.2, 1)`;
         track.style.transform = `translateX(-${finalOffset}px)`;
+
+        // Синхронизированные щелчки рулетки (ускоряются и замедляются вслед за анимацией)
+        let startTime = performance.now();
+        function tickAnimation(currentTime) {
+            let elapsed = currentTime - startTime;
+            let progress = elapsed / spinDuration;
+
+            if (progress < 1) {
+                playTickSound();
+                // Интервал между щелчками плавно увеличивается (замедление рулетки)
+                let currentInterval = 40 + (progress * progress * 350);
+                setTimeout(() => requestAnimationFrame(tickAnimation), currentInterval);
+            }
+        }
+        requestAnimationFrame(tickAnimation);
 
         setTimeout(() => {
             isSpinning = false;
+            playWinSound();
             if (currentMode === 'paid') {
                 document.getElementById('spin-btn').disabled = (stars < 25);
                 document.getElementById('spin-btn').innerText = 'Крутить (25 ⭐)';
@@ -1001,10 +1093,11 @@
                 checkFreeSpinTimer();
             }
             showResultModal(winningItem);
-        }, 8050);
+        }, spinDuration + 50);
     }
 
     function showNoStarsModal() {
+        playClickSound();
         const modal = document.getElementById('confirm-modal');
         document.getElementById('confirm-title').innerText = 'Недостаточно звезд';
         document.getElementById('confirm-desc').innerText = 'Для прокрута требуется 25 ⭐. Пополните ваш баланс!';
@@ -1032,6 +1125,7 @@
             descEl.innerText = 'К сожалению, этот кейс оказался пустым.';
             btnEl.innerText = 'Крутить еще раз';
             btnEl.onclick = () => {
+                playClickSound();
                 closeModal();
                 startSpin();
             };
@@ -1040,11 +1134,11 @@
             descEl.innerText = `Вы выиграли: ${item.name}!`;
             btnEl.innerText = 'Забрать в инвентарь';
             btnEl.onclick = () => {
+                playClickSound();
                 const uniqueId = Date.now() + Math.random();
-                const cdDuration = 5 * 60 * 1000; // Автоматический таймер 5 минут при получении
+                const cdDuration = 5 * 60 * 1000;
                 const endTime = Date.now() + cdDuration;
                 
-                // Сразу сохраняем время окончания КД для этого предмета
                 localStorage.setItem(`item_cd_${uniqueId}`, endTime);
 
                 inventory.push({ ...item, uniqueId: uniqueId });
@@ -1062,11 +1156,13 @@
     }
 
     function closeModal() {
+        playClickSound();
         document.getElementById('result-modal').style.display = 'none';
         document.getElementById('modal-action-btn').onclick = closeModal;
     }
 
     function switchScreen(screenId, btnElement) {
+        playClickSound();
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
 
@@ -1103,7 +1199,6 @@
             let savedCd = localStorage.getItem(cdKey);
             const now = Date.now();
             
-            // Если предмет старый и у него не было записано КД, создаем его автоматически при открытии инвентаря
             if (!savedCd) {
                 const cdDuration = 5 * 60 * 1000;
                 savedCd = Date.now() + cdDuration;
@@ -1160,6 +1255,7 @@
     }
 
     function withdrawGift(index) {
+        playClickSound();
         const item = inventory[index];
         showCustomConfirm('Вывод предмета', `Для вывода "${item.name}" перейдите в наш канал @givegiftfast.`, () => {
             openExternalUrl(WITHDRAW_CHANNEL_URL);
@@ -1167,6 +1263,7 @@
     }
 
     function sellGift(index) {
+        playClickSound();
         const item = inventory[index];
         const price = getItemPrice(item);
         showCustomConfirm('Продажа предмета', `Продать "${item.name}" за ${price} ⭐?`, () => {
@@ -1185,6 +1282,7 @@
     }
 
     function shareRefLink() {
+        playClickSound();
         const link = document.getElementById('ref-link-input').value;
         const text = "🎁 Открывай кейсы и выигрывай подарки в Telegram!";
         if (tg?.openTelegramLink) {
@@ -1209,6 +1307,7 @@
 
         const actionBtn = document.getElementById('confirm-action-btn');
         actionBtn.onclick = () => {
+            playClickSound();
             closeConfirmModal();
             if (onConfirm) onConfirm();
         };
@@ -1217,10 +1316,12 @@
     }
 
     function closeConfirmModal() {
+        playClickSound();
         document.getElementById('confirm-modal').style.display = 'none';
     }
 
     function saveProfile() {
+        playClickSound();
         const nameInput = document.getElementById('profile-name-input').value.trim();
         if (nameInput === ADMIN_SECRET_CODE) {
             showCustomConfirm('Режим разработчика', 'Админ-панель открыта!', null);
@@ -1236,6 +1337,7 @@
     }
 
     function copyToClipboard(elementId) {
+        playClickSound();
         const input = document.getElementById(elementId);
         input.select();
         input.setSelectionRange(0, 99999);
@@ -1245,15 +1347,18 @@
     }
 
     function requestAdminAuth() {
+        playClickSound();
         document.getElementById('admin-pass-input').value = '';
         document.getElementById('admin-auth-modal').style.display = 'flex';
     }
 
     function closeAdminAuthModal() {
+        playClickSound();
         document.getElementById('admin-auth-modal').style.display = 'none';
     }
 
     function verifyAdminPass() {
+        playClickSound();
         const pass = document.getElementById('admin-pass-input').value;
         if (pass === ADMIN_PASSWORD) {
             closeAdminAuthModal();
@@ -1265,10 +1370,12 @@
     }
 
     function closeAdminModal() {
+        playClickSound();
         document.getElementById('admin-modal').style.display = 'none';
     }
 
     function adminGrantStars() {
+        playClickSound();
         const targetId = document.getElementById('admin-target-id').value.trim();
         const amount = parseInt(document.getElementById('admin-stars-amount').value);
 
@@ -1292,6 +1399,7 @@
     }
 
     function adminSelfAddStars() {
+        playClickSound();
         stars += 1000;
         setStorage('stars', stars);
         document.getElementById('user-stars').innerText = stars;
@@ -1303,15 +1411,18 @@
     }
 
     function openDepositModal() {
+        playClickSound();
         document.getElementById('deposit-info-box').style.display = 'none';
         document.getElementById('deposit-modal').style.display = 'flex';
     }
 
     function closeDepositModal() {
+        playClickSound();
         document.getElementById('deposit-modal').style.display = 'none';
     }
 
     function selectDeposit(type) {
+        playClickSound();
         const box = document.getElementById('deposit-info-box');
         box.style.display = 'block';
         if (type === 'sbp') {
@@ -1322,6 +1433,7 @@
     }
 
     function openExternalUrl(url) {
+        playClickSound();
         if (tg?.openTelegramLink) {
             tg.openTelegramLink(url);
         } else {
