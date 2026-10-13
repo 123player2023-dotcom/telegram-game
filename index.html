@@ -403,6 +403,48 @@
             cursor: pointer;
             text-align: center;
         }
+        
+        /* Стили для овальных тумблеров (переключателей) */
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #18181b;
+            border: 1px solid #3f3f46;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            color: #e4e4e7;
+        }
+        .toggle-switch {
+            width: 50px;
+            height: 26px;
+            background-color: #52525b; /* Серый по умолчанию (выкл) */
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.25s ease;
+            display: flex;
+            align-items: center;
+            padding: 2px;
+        }
+        .toggle-switch.active {
+            background-color: #22c55e; /* Зеленый при включении */
+        }
+        .toggle-ball {
+            width: 22px;
+            height: 22px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            position: absolute;
+            left: 2px;
+            transition: transform 0.25s cubic-bezier(0.15, 0.85, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .toggle-switch.active .toggle-ball {
+            transform: translateX(24px); /* Перемещение шарика вправо */
+        }
+
         .deposit-options {
             display: flex;
             flex-direction: column;
@@ -624,6 +666,21 @@
                 </div>
 
                 <button class="btn" onclick="saveProfile()">Сохранить имя</button>
+
+                <!-- Блок настроек аудио с тумблерами -->
+                <div class="setting-row">
+                    <span>🎵 Фоновая музыка</span>
+                    <div class="toggle-switch active" id="toggle-music" onclick="toggleMusicSwitch()">
+                        <div class="toggle-ball"></div>
+                    </div>
+                </div>
+
+                <div class="setting-row">
+                    <span>🔊 Звуковые эффекты</span>
+                    <div class="toggle-switch active" id="toggle-sfx" onclick="toggleSfxSwitch()">
+                        <div class="toggle-ball"></div>
+                    </div>
+                </div>
                 
                 <div onclick="openExternalUrl('https://t.me/frickhaus')" class="link-btn">💬 Написать в техподдержку</div>
                 
@@ -730,8 +787,57 @@
 </div>
 
 <script>
-    // --- ЗВУКОВОЙ ДВИЖОК (Web Audio API) ---
+    // --- МУЗЫКАЛЬНЫЙ И АУДИО ДВИЖОК С ПЕРЕКЛЮЧАТЕЛЯМИ ---
     let audioCtx = null;
+    let bgMusicGain = null;
+    let isMusicPlaying = false;
+
+    // Состояния тумблеров (сохраняются в localStorage)
+    let musicEnabled = JSON.parse(localStorage.getItem('music_enabled') ?? 'true');
+    let sfxEnabled = JSON.parse(localStorage.getItem('sfx_enabled') ?? 'true');
+
+    // Инициализация состояния UI тумблеров при загрузке
+    window.addEventListener('DOMContentLoaded', () => {
+        const musicToggle = document.getElementById('toggle-music');
+        const sfxToggle = document.getElementById('toggle-sfx');
+
+        if (!musicEnabled) musicToggle.classList.remove('active');
+        if (!sfxEnabled) sfxToggle.classList.remove('active');
+    });
+
+    function toggleMusicSwitch() {
+        musicEnabled = !musicEnabled;
+        localStorage.setItem('music_enabled', musicEnabled);
+        const toggleEl = document.getElementById('toggle-music');
+        
+        if (musicEnabled) {
+            toggleEl.classList.add('active');
+            if (bgMusicGain && audioCtx) {
+                bgMusicGain.gain.setTargetAtTime(0.45, audioCtx.currentTime, 0.1);
+            } else {
+                initAudio();
+            }
+        } else {
+            toggleEl.classList.remove('active');
+            if (bgMusicGain && audioCtx) {
+                bgMusicGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+            }
+        }
+        playClickSound();
+    }
+
+    function toggleSfxSwitch() {
+        sfxEnabled = !sfxEnabled;
+        localStorage.setItem('sfx_enabled', sfxEnabled);
+        const toggleEl = document.getElementById('toggle-sfx');
+        
+        if (sfxEnabled) {
+            toggleEl.classList.add('active');
+        } else {
+            toggleEl.classList.remove('active');
+        }
+        playClickSound();
+    }
 
     function initAudio() {
         if (!audioCtx) {
@@ -740,19 +846,89 @@
         if (audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
+        if (!isMusicPlaying) {
+            startDesolateSlowedMusic();
+            isMusicPlaying = true;
+        }
     }
 
-    // Звук мягкого клика по кнопкам
+    // Музыка в стиле Desolate Slowed & Reverb
+    function startDesolateSlowedMusic() {
+        try {
+            bgMusicGain = audioCtx.createGain();
+            const targetVol = musicEnabled ? 0.45 : 0;
+            bgMusicGain.gain.setValueAtTime(targetVol, audioCtx.currentTime);
+            bgMusicGain.connect(audioCtx.destination);
+
+            const desolateChords = [110, 130.81, 146.83, 98.00];
+            let chordIndex = 0;
+
+            function playAtmosphereLoop() {
+                if (!audioCtx) return;
+                const baseFreq = desolateChords[chordIndex];
+
+                const osc = audioCtx.createOscillator();
+                const filter = audioCtx.createBiquadFilter();
+                const noteGain = audioCtx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(350, audioCtx.currentTime);
+
+                noteGain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+                noteGain.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 1.5);
+                noteGain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 5.0);
+
+                osc.connect(filter);
+                filter.connect(noteGain);
+                noteGain.connect(bgMusicGain);
+
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 5.0);
+
+                const highOsc = audioCtx.createOscillator();
+                const highGain = audioCtx.createGain();
+                highOsc.type = 'sine';
+                highOsc.frequency.setValueAtTime(baseFreq * 2.5, audioCtx.currentTime);
+
+                highGain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+                highGain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 2.0);
+                highGain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 4.5);
+
+                highOsc.connect(highGain);
+                highGain.connect(bgMusicGain);
+
+                highOsc.start(audioCtx.currentTime);
+                highOsc.stop(audioCtx.currentTime + 4.5);
+
+                chordIndex = (chordIndex + 1) % desolateChords.length;
+                setTimeout(playAtmosphereLoop, 4500);
+            }
+
+            playAtmosphereLoop();
+        } catch(e) {}
+    }
+
+    // Приглушение при прокрутке
+    function duckMusic(duck) {
+        if (!bgMusicGain || !audioCtx || !musicEnabled) return;
+        const targetVolume = duck ? 0.045 : 0.45;
+        bgMusicGain.gain.setTargetAtTime(targetVolume, audioCtx.currentTime, 0.2);
+    }
+
+    // Звук клика (проверяет sfxEnabled)
     function playClickSound() {
         try {
             initAudio();
-            if (!audioCtx) return;
+            if (!sfxEnabled || !audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'sine';
             osc.frequency.setValueAtTime(450, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.04);
-            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
             osc.connect(gain);
             gain.connect(audioCtx.destination);
@@ -761,17 +937,17 @@
         } catch(e) {}
     }
 
-    // Тактильный механический щелчок рулетки
+    // Тактильный щелчок рулетки (проверяет sfxEnabled)
     function playTickSound() {
         try {
             initAudio();
-            if (!audioCtx) return;
+            if (!sfxEnabled || !audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.type = 'square'; // Квадратная волна дает отчетливый «щелкающий» акцент
+            osc.type = 'square';
             osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.015);
-            gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.015);
             osc.connect(gain);
             gain.connect(audioCtx.destination);
@@ -780,11 +956,11 @@
         } catch(e) {}
     }
 
-    // Звук победы
+    // Звук победы (проверяет sfxEnabled)
     function playWinSound() {
         try {
             initAudio();
-            if (!audioCtx) return;
+            if (!sfxEnabled || !audioCtx) return;
             const now = audioCtx.currentTime;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
@@ -793,7 +969,7 @@
             osc.frequency.setValueAtTime(659.25, now + 0.1);
             osc.frequency.setValueAtTime(783.99, now + 0.2);
             osc.frequency.setValueAtTime(1046.50, now + 0.3);
-            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.setValueAtTime(0.15, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
             osc.connect(gain);
             gain.connect(audioCtx.destination);
@@ -1039,6 +1215,8 @@
             }
         }
 
+        duckMusic(true);
+
         isSpinning = true;
         document.getElementById('spin-btn').disabled = true;
 
@@ -1063,12 +1241,10 @@
         track.style.transform = 'translateX(0px)';
         track.offsetHeight;
 
-        // Быстрая анимация за 3.5 секунды
         const spinDuration = 3500;
         track.style.transition = `transform ${spinDuration}ms cubic-bezier(0.15, 0.85, 0.2, 1)`;
         track.style.transform = `translateX(-${finalOffset}px)`;
 
-        // Синхронизированные щелчки рулетки (ускоряются и замедляются вслед за анимацией)
         let startTime = performance.now();
         function tickAnimation(currentTime) {
             let elapsed = currentTime - startTime;
@@ -1076,7 +1252,6 @@
 
             if (progress < 1) {
                 playTickSound();
-                // Интервал между щелчками плавно увеличивается (замедление рулетки)
                 let currentInterval = 40 + (progress * progress * 350);
                 setTimeout(() => requestAnimationFrame(tickAnimation), currentInterval);
             }
@@ -1086,6 +1261,8 @@
         setTimeout(() => {
             isSpinning = false;
             playWinSound();
+            duckMusic(false);
+
             if (currentMode === 'paid') {
                 document.getElementById('spin-btn').disabled = (stars < 25);
                 document.getElementById('spin-btn').innerText = 'Крутить (25 ⭐)';
