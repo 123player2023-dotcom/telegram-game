@@ -3,579 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Telegram Gift Case Game (Online Duel)</title>
-    <!-- Подключаем Socket.io клиент с вашего сервера на Render -->
+    <title>Telegram Gift Case Game (PvP Dual Roulettes)</title>
     <script src="https://telegram-duel-server-t0w9.onrender.com/socket.io/socket.io.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #0f0f11;
-            color: #ffffff;
-        }
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .app-container {
-            width: 100vw;
-            height: 100dvh;
-            background: #18181b;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-            padding-top: env(safe-area-inset-top);
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
-            background: #202024;
-            border-bottom: 1px solid #27272a;
-            flex-shrink: 0;
-        }
-        .header-title {
-            font-size: 15px;
-            font-weight: 600;
-            color: #a78bfa;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 60%;
-        }
-        .balance-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .balance-box {
-            background: #27272a;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #fbbf24;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .add-stars-btn {
-            background: #a78bfa;
-            color: #18181b;
-            border: none;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.1s, background 0.2s;
-        }
-        .add-stars-btn:active {
-            transform: scale(0.9);
-        }
-        .content {
-            flex: 1;
-            position: relative;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 12px;
-        }
-        .screen {
-            display: none;
-            width: 100%;
-            height: 100%;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.25s ease;
-        }
-        .screen.active {
-            display: flex;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(4px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .nav-bar {
-            display: flex;
-            background: #202024;
-            border-top: 1px solid #27272a;
-            height: calc(60px + env(safe-area-inset-bottom));
-            padding-bottom: env(safe-area-inset-bottom);
-            flex-shrink: 0;
-        }
-        .nav-btn {
-            flex: 1;
-            background: none;
-            border: none;
-            color: #71717a;
-            font-size: 11px;
-            font-weight: 500;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 3px;
-            cursor: pointer;
-            position: relative;
-            transition: color 0.2s;
-        }
-        .nav-btn span.icon {
-            font-size: 18px;
-            position: relative;
-        }
-        .nav-btn.active {
-            color: #a78bfa;
-            background: #27272a55;
-        }
-        .badge-dot {
-            position: absolute;
-            top: -2px;
-            right: -6px;
-            width: 10px;
-            height: 10px;
-            background-color: #ef4444;
-            border-radius: 50%;
-            border: 2px solid #202024;
-            display: none;
-            box-shadow: 0 0 8px #ef4444;
-        }
-        .badge-dot.active {
-            display: block;
-        }
-        .roulette-switcher {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-            width: 100%;
-            max-width: 400px;
-        }
-        .switch-tab {
-            flex: 1;
-            background: #27272a;
-            border: 1px solid #3f3f46;
-            color: #a1a1aa;
-            padding: 10px 6px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .switch-tab.active {
-            background: #8b5cf6;
-            color: #ffffff;
-            border-color: #a78bfa;
-        }
-        .case-card {
-            background: #202024;
-            border: 1px solid #27272a;
-            border-radius: 16px;
-            padding: 16px;
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-        }
-        .roulette-container {
-            position: relative;
-            width: 100%;
-            height: 105px;
-            background: #111113;
-            border: 2px solid #3f3f46;
-            border-radius: 12px;
-            overflow: hidden;
-            margin: 12px 0;
-        }
-        .roulette-pointer {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 3px;
-            height: 100%;
-            background: #ef4444;
-            z-index: 10;
-            box-shadow: 0 0 10px #ef4444;
-        }
-        .roulette-track {
-            display: flex;
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            will-change: transform;
-        }
-        .roulette-item {
-            min-width: 85px;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: #18181b;
-            border-right: 1px solid #27272a;
-            font-size: 28px;
-        }
-        .roulette-item span.label {
-            font-size: 9px;
-            color: #a1a1aa;
-            margin-top: 3px;
-        }
-        .btn {
-            background: linear-gradient(135deg, #8b5cf6, #ec4899);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.2s, transform 0.1s;
-            width: 100%;
-        }
-        .btn:active {
-            transform: scale(0.98);
-        }
-        .btn:disabled {
-            background: #3f3f46;
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-        .withdraw-btn {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 6px 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 6px;
-            width: 100%;
-        }
-        .sell-btn {
-            background: #f59e0b;
-            color: #18181b;
-            border: none;
-            padding: 6px 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            margin-top: 4px;
-            width: 100%;
-        }
-        .inventory-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            width: 100%;
-            max-width: 400px;
-            max-height: 100%;
-            overflow-y: auto;
-            padding: 4px;
-        }
-        .inventory-item {
-            background: #202024;
-            border: 1px solid #27272a;
-            border-radius: 12px;
-            padding: 10px 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
-            text-align: center;
-        }
-        .inventory-item span.item-name {
-            font-size: 11px;
-            color: #a1a1aa;
-            margin-top: 3px;
-        }
-        .empty-inv {
-            color: #71717a;
-            font-size: 13px;
-            text-align: center;
-            grid-column: span 3;
-            padding: 40px 10px;
-        }
-        .profile-card {
-            background: #202024;
-            border: 1px solid #27272a;
-            border-radius: 16px;
-            padding: 18px;
-            max-width: 400px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            text-align: left;
-        }
-        .input-group label {
-            font-size: 11px;
-            color: #a1a1aa;
-        }
-        .input-row {
-            display: flex;
-            gap: 8px;
-        }
-        .input-group input {
-            background: #18181b;
-            border: 1px solid #3f3f46;
-            padding: 9px 12px;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 13px;
-            flex: 1;
-        }
-        .input-group input:focus {
-            border-color: #8b5cf6;
-            outline: none;
-        }
-        .input-group input[readonly] {
-            background: #111113;
-            color: #71717a;
-            border-color: #27272a;
-        }
-        .copy-btn {
-            background: #27272a;
-            color: #a78bfa;
-            border: 1px solid #3f3f46;
-            padding: 0 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .link-btn {
-            display: block;
-            background: #27272a;
-            color: #a78bfa;
-            text-decoration: none;
-            padding: 11px;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 13px;
-            font-weight: 600;
-            border: 1px solid #3f3f46;
-            cursor: pointer;
-        }
-        .admin-btn {
-            background: #27272a;
-            color: #ef4444;
-            border: 1px solid #ef444455;
-            padding: 9px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background-color: #0f0f11; color: #ffffff; }
+        body { display: flex; justify-content: center; align-items: center; }
+        .app-container { width: 100vw; height: 100dvh; background: #18181b; display: flex; flex-direction: column; position: relative; overflow: hidden; padding-top: env(safe-area-inset-top); }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #202024; border-bottom: 1px solid #27272a; flex-shrink: 0; }
+        .header-title { font-size: 15px; font-weight: 600; color: #a78bfa; }
+        .balance-container { display: flex; align-items: center; gap: 8px; }
+        .balance-box { background: #27272a; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #fbbf24; }
+        .add-stars-btn { background: #a78bfa; color: #18181b; border: none; width: 28px; height: 28px; border-radius: 50%; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .content { flex: 1; position: relative; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px; }
+        .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; animation: fadeIn 0.25s ease; }
+        .screen.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        .nav-bar { display: flex; background: #202024; border-top: 1px solid #27272a; height: calc(60px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); flex-shrink: 0; }
+        .nav-btn { flex: 1; background: none; border: none; color: #71717a; font-size: 11px; font-weight: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; }
+        .nav-btn.active { color: #a78bfa; background: #27272a55; }
+        .badge-dot { position: absolute; top: -2px; right: -6px; width: 10px; height: 10px; background-color: #ef4444; border-radius: 50%; display: none; }
+        .badge-dot.active { display: block; }
+        .roulette-switcher { display: flex; gap: 8px; margin-bottom: 12px; width: 100%; max-width: 400px; }
+        .switch-tab { flex: 1; background: #27272a; border: 1px solid #3f3f46; color: #a1a1aa; padding: 10px 6px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .switch-tab.active { background: #8b5cf6; color: #ffffff; border-color: #a78bfa; }
+        .case-card { background: #202024; border: 1px solid #27272a; border-radius: 16px; padding: 16px; text-align: center; max-width: 400px; width: 100%; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
         
-        .setting-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #18181b;
-            border: 1px solid #3f3f46;
-            padding: 10px 12px;
-            border-radius: 10px;
-            font-size: 13px;
-            color: #e4e4e7;
-        }
-        .toggle-switch {
-            width: 50px;
-            height: 26px;
-            background-color: #52525b;
-            border-radius: 13px;
-            position: relative;
-            cursor: pointer;
-            transition: background-color 0.25s ease;
-            display: flex;
-            align-items: center;
-            padding: 2px;
-        }
-        .toggle-switch.active {
-            background-color: #22c55e;
-        }
-        .toggle-ball {
-            width: 22px;
-            height: 22px;
-            background-color: #ffffff;
-            border-radius: 50%;
-            position: absolute;
-            left: 2px;
-            transition: transform 0.25s cubic-bezier(0.15, 0.85, 0.2, 1);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        .toggle-switch.active .toggle-ball {
-            transform: translateX(24px);
-        }
+        /* Стили рулеток */
+        .roulette-container { position: relative; width: 100%; height: 90px; background: #111113; border: 2px solid #3f3f46; border-radius: 12px; overflow: hidden; margin: 8px 0; }
+        .roulette-pointer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 3px; height: 100%; background: #ef4444; z-index: 10; box-shadow: 0 0 10px #ef4444; }
+        .roulette-track { display: flex; position: absolute; left: 0; top: 0; height: 100%; will-change: transform; }
+        .roulette-item { min-width: 75px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #18181b; border-right: 1px solid #27272a; font-size: 24px; }
+        .roulette-item span.label { font-size: 9px; color: #a1a1aa; margin-top: 2px; }
 
-        .deposit-options {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin: 12px 0;
-        }
-        .deposit-option-btn {
-            background: #18181b;
-            border: 1px solid #3f3f46;
-            color: #fff;
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        .deposit-info-box {
-            background: #18181b;
-            border: 1px solid #8b5cf6;
-            padding: 12px;
-            border-radius: 10px;
-            color: #d8b4fe;
-            font-size: 13px;
-            margin: 10px 0;
-            display: none;
-            text-align: center;
-        }
-        .modal-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.75);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            animation: fadeIn 0.2s ease;
-        }
-        .modal-card {
-            background: #202024;
-            border: 1px solid #3f3f46;
-            border-radius: 20px;
-            padding: 20px;
-            text-align: center;
-            max-width: 320px;
-            width: 88%;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            position: relative;
-        }
-        .modal-close-cross {
-            position: absolute;
-            top: 10px;
-            right: 14px;
-            font-size: 18px;
-            color: #a1a1aa;
-            cursor: pointer;
-            padding: 4px;
-        }
-        .modal-icon {
-            font-size: 48px;
-            margin-bottom: 8px;
-        }
-        .modal-title {
-            font-size: 17px;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-        .modal-desc {
-            font-size: 12px;
-            color: #a1a1aa;
-            margin-bottom: 12px;
-        }
-        .modal-buttons {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-        }
-        .close-btn {
-            background: #27272a;
-            color: #a1a1aa;
-            border: 1px solid #3f3f46;
-            padding: 10px 16px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-        }
-        .ref-stat-box {
-            display: flex;
-            justify-content: space-between;
-            background: #18181b;
-            border: 1px solid #3f3f46;
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 12px;
-        }
-        .ref-stat-item {
-            text-align: center;
-            flex: 1;
-        }
-        .ref-stat-item:first-child {
-            border-right: 1px solid #27272a;
-        }
-        .ref-stat-val {
-            font-size: 18px;
-            font-weight: 700;
-            color: #fbbf24;
-        }
-        .ref-stat-lbl {
-            font-size: 11px;
-            color: #a1a1aa;
-            margin-top: 2px;
-        }
+        .btn { background: linear-gradient(135deg, #8b5cf6, #ec4899); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 8px; }
+        .btn:disabled { background: #3f3f46; cursor: not-allowed; opacity: 0.7; }
+        .inventory-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 400px; max-height: 100%; overflow-y: auto; padding: 4px; }
+        .inventory-item { background: #202024; border: 1px solid #27272a; border-radius: 12px; padding: 10px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 26px; text-align: center; }
+        .inventory-item span.item-name { font-size: 11px; color: #a1a1aa; margin-top: 3px; }
+        .empty-inv { color: #71717a; font-size: 13px; text-align: center; grid-column: span 3; padding: 40px 10px; }
+        .profile-card { background: #202024; border: 1px solid #27272a; border-radius: 16px; padding: 18px; max-width: 400px; width: 100%; display: flex; flex-direction: column; gap: 12px; }
+        .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: none; justify-content: center; align-items: center; z-index: 100; }
+        .modal-card { background: #202024; border: 1px solid #3f3f46; border-radius: 20px; padding: 20px; text-align: center; max-width: 320px; width: 88%; position: relative; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <!-- Header -->
     <div class="header">
-        <div class="header-title" id="header-username">🎁 Игрок (Онлайн)</div>
+        <div class="header-title" id="header-username">🎁 Игрок</div>
         <div class="balance-container">
-            <div class="balance-box">
-                ⭐ <span id="user-stars">50</span>
-            </div>
-            <button class="add-stars-btn" onclick="openDepositModal()" title="Пополнить баланс">+</button>
+            <div class="balance-box">⭐ <span id="user-stars">50</span></div>
+            <button class="add-stars-btn" onclick="openDepositModal()">+</button>
         </div>
     </div>
 
-    <!-- Content Screens -->
     <div class="content">
-        <!-- Main Menu / Roulette Screen -->
         <div class="screen active" id="screen-main">
             <div class="roulette-switcher">
                 <button class="switch-tab active" id="tab-paid" onclick="switchRouletteMode('paid')">🎁 Кейс (25 ⭐)</button>
@@ -587,18 +70,32 @@
                 <h2 style="font-size: 17px; margin-bottom: 4px;" id="case-title">Подарочный кейс</h2>
                 <p style="font-size: 11px; color: #a1a1aa; margin-bottom: 8px;" id="case-desc">Испытай удачу и выиграй эксклюзивный подарок!</p>
                 
-                <div class="roulette-container" id="roulette-box-wrap">
+                <!-- Обычная рулетка (для одиночных кейсов) -->
+                <div class="roulette-container" id="single-roulette-box">
                     <div class="roulette-pointer"></div>
                     <div class="roulette-track" id="roulette-track"></div>
                 </div>
 
-                <div id="duel-status-text" style="font-size: 13px; color: #a78bfa; margin: 10px 0; display: none;">Поиск противника (10с)...</div>
+                <!-- Блок дуэли: две раздельные рулетки (Ваша и Соперника) -->
+                <div id="duel-arena-box" style="display: none;">
+                    <div style="font-size: 12px; color: #a78bfa; text-align: left; margin-bottom: 2px;">🟢 Ваша рулетка:</div>
+                    <div class="roulette-container">
+                        <div class="roulette-pointer"></div>
+                        <div class="roulette-track" id="my-roulette-track"></div>
+                    </div>
 
+                    <div style="font-size: 12px; color: #ef4444; text-align: left; margin-top: 6px; margin-bottom: 2px;" id="opponent-label-box">🔴 Рулетка соперника:</div>
+                    <div class="roulette-container">
+                        <div class="roulette-pointer"></div>
+                        <div class="roulette-track" id="opponent-roulette-track"></div>
+                    </div>
+                </div>
+
+                <div id="duel-status-text" style="font-size: 13px; color: #a78bfa; margin: 10px 0; display: none;">Поиск противника (10с)...</div>
                 <button class="btn" id="spin-btn" onclick="startSpin()">Крутить (25 ⭐)</button>
             </div>
         </div>
 
-        <!-- Inventory Screen -->
         <div class="screen" id="screen-inventory">
             <h2 style="margin-bottom: 12px; font-size: 18px;">Ваш инвентарь</h2>
             <div class="inventory-grid" id="inventory-grid">
@@ -606,157 +103,33 @@
             </div>
         </div>
 
-        <!-- Referral Screen -->
         <div class="screen" id="screen-referral">
-            <div class="profile-card">
-                <h2 style="font-size: 17px; margin-bottom: 4px;">👥 Пригласи друзей</h2>
-                <p style="font-size: 12px; color: #a1a1aa; margin-bottom: 8px;">Получай +10 ⭐ за каждого друга!</p>
-
-                <div class="ref-stat-box">
-                    <div class="ref-stat-item">
-                        <div class="ref-stat-val" id="ref-count">0</div>
-                        <div class="ref-stat-lbl">Приглашено</div>
-                    </div>
-                    <div class="ref-stat-item">
-                        <div class="ref-stat-val" id="ref-earned">0 ⭐</div>
-                        <div class="ref-stat-lbl">Заработано</div>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label>Ваша реферальная ссылка</label>
-                    <div class="input-row">
-                        <input type="text" id="ref-link-input" readonly>
-                        <button class="copy-btn" onclick="copyToClipboard('ref-link-input')">📋</button>
-                    </div>
-                </div>
-
-                <button class="btn" onclick="shareRefLink()">🚀 Пригласить друзей</button>
-            </div>
+            <div class="profile-card"><h2>👥 Пригласи друзей</h2></div>
         </div>
 
-        <!-- Profile Screen -->
         <div class="screen" id="screen-profile">
-            <div class="profile-card">
-                <h2 style="font-size: 17px; margin-bottom: 4px;">👤 Профиль игрока</h2>
-                
-                <div class="input-group">
-                    <label>Telegram ID</label>
-                    <div class="input-row">
-                        <input type="text" id="profile-id-input" readonly>
-                        <button class="copy-btn" onclick="copyToClipboard('profile-id-input')">📋</button>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label>Имя пользователя</label>
-                    <div class="input-row">
-                        <input type="text" id="profile-name-input" placeholder="Введите имя">
-                        <button class="copy-btn" onclick="copyToClipboard('profile-name-input')">📋</button>
-                    </div>
-                </div>
-
-                <button class="btn" onclick="saveProfile()">Сохранить имя</button>
-
-                <div class="setting-row">
-                    <span>🎵 Фоновая музыка</span>
-                    <div class="toggle-switch active" id="toggle-music" onclick="toggleMusicSwitch()">
-                        <div class="toggle-ball"></div>
-                    </div>
-                </div>
-
-                <div class="setting-row">
-                    <span>🔊 Звуковые эффекты</span>
-                    <div class="toggle-switch active" id="toggle-sfx" onclick="toggleSfxSwitch()">
-                        <div class="toggle-ball"></div>
-                    </div>
-                </div>
-                
-                <div onclick="openExternalUrl('https://t.me/frickhaus')" class="link-btn">💬 Написать в техподдержку</div>
-                <div onclick="requestAdminAuth()" class="admin-btn">⚙️ Панель Администратора</div>
-            </div>
+            <div class="profile-card"><h2>👤 Профиль игрока</h2></div>
         </div>
     </div>
 
-    <!-- Navigation Bar -->
     <div class="nav-bar">
-        <button class="nav-btn active" onclick="switchScreen('main', this)">
-            <span class="icon">🎁</span>Кейсы
-        </button>
-        <button class="nav-btn" onclick="switchScreen('inventory', this)">
-            <span class="icon">
-                🎒
-                <div class="badge-dot" id="inventory-badge"></div>
-            </span>Инвентарь
-        </button>
-        <button class="nav-btn" onclick="switchScreen('referral', this)">
-            <span class="icon">👥</span>Друзья
-        </button>
-        <button class="nav-btn" onclick="switchScreen('profile', this)">
-            <span class="icon">👤</span>Профиль
-        </button>
+        <button class="nav-btn active" onclick="switchScreen('main', this)">🎁 Кейсы</button>
+        <button class="nav-btn" onclick="switchScreen('inventory', this)">🎒 Инвентарь<div class="badge-dot" id="inventory-badge"></div></button>
+        <button class="nav-btn" onclick="switchScreen('referral', this)">👥 Друзья</button>
+        <button class="nav-btn" onclick="switchScreen('profile', this)">👤 Профиль</button>
     </div>
 
-    <!-- Modals -->
     <div class="modal-overlay" id="result-modal">
         <div class="modal-card">
-            <div class="modal-close-cross" onclick="closeModal()">✖</div>
-            <div class="modal-icon" id="modal-icon">🎁</div>
-            <div class="modal-title" id="modal-title">Поздравляем!</div>
-            <div class="modal-desc" id="modal-desc">Вы выиграли подарок!</div>
-            <button class="btn" id="modal-action-btn" onclick="closeModal()">Забрать в инвентарь</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="deposit-modal">
-        <div class="modal-card">
-            <div class="modal-close-cross" onclick="closeDepositModal()">✖</div>
-            <div class="modal-title">Пополнение баланса</div>
-            <div class="modal-desc">Выберите удобный способ:</div>
-            <div class="deposit-options">
-                <button class="deposit-option-btn" onclick="selectDeposit('sbp')">💳 Оплата через СБП</button>
-                <button class="deposit-option-btn" onclick="selectDeposit('stars')">⭐ Звездочки TG</button>
-            </div>
-            <div class="deposit-info-box" id="deposit-info-box"></div>
-            <button class="close-btn" onclick="closeDepositModal()">Закрыть</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="admin-auth-modal">
-        <div class="modal-card">
-            <div class="modal-close-cross" onclick="closeAdminAuthModal()">✖</div>
-            <div class="modal-title" style="color: #ef4444;">🔒 Доступ ограничен</div>
-            <div class="modal-desc">Введите пароль администратора:</div>
-            <div class="input-group" style="margin-bottom: 12px;">
-                <input type="password" id="admin-pass-input" placeholder="Пароль..." style="text-align: center;">
-            </div>
-            <button class="btn" onclick="verifyAdminPass()" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">Войти</button>
-            <button class="close-btn" onclick="closeAdminAuthModal()" style="margin-top: 8px;">Отмена</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="admin-modal">
-        <div class="modal-card">
-            <div class="modal-close-cross" onclick="closeAdminModal()">✖</div>
-            <div class="modal-title" style="color: #ef4444;">⚙️ Админ Панель</div>
-            <div class="modal-desc">Выдача Звездочек (⭐)</div>
-            <div class="input-group" style="margin-bottom: 8px;">
-                <label>Telegram ID пользователя</label>
-                <input type="text" id="admin-target-id" placeholder="ID...">
-            </div>
-            <div class="input-group" style="margin-bottom: 12px;">
-                <label>Количество звездочек</label>
-                <input type="number" id="admin-stars-amount" placeholder="100">
-            </div>
-            <button class="btn" onclick="adminGrantStars()" style="background: linear-gradient(135deg, #ef4444, #f59e0b); margin-bottom: 8px;">Выдать звездочки</button>
-            <button class="close-btn" onclick="adminSelfAddStars()" style="border-color: #8b5cf6; color: #a78bfa;">+1000 ⭐ Себе</button>
-            <button class="close-btn" onclick="closeAdminModal()" style="margin-top: 8px;">Закрыть</button>
+            <div style="font-size:48px;" id="modal-icon">🎁</div>
+            <div style="font-size:17px; font-weight:600; margin-top:6px;" id="modal-title">Поздравляем!</div>
+            <div style="font-size:12px; color:#a1a1aa; margin:10px 0;" id="modal-desc">Вы выиграли подарок!</div>
+            <button class="btn" onclick="closeModal()">Забрать</button>
         </div>
     </div>
 </div>
 
 <script>
-    // Подключение к WebSocket серверу на Render
     const socket = io('https://telegram-duel-server-t0w9.onrender.com');
 
     let userId = localStorage.getItem('tg_user_id') || 'user_' + Math.floor(Math.random() * 1000000);
@@ -764,78 +137,76 @@
     let username = localStorage.getItem('tg_username') || 'Игрок_' + userId.slice(-4);
     let userStars = parseInt(localStorage.getItem('tg_stars') || '50');
     let inventory = JSON.parse(localStorage.getItem('tg_inventory') || '[]');
-    let currentMode = 'paid'; // 'paid', 'duel', 'free'
+    let currentMode = 'paid';
     let isSpinning = false;
 
     const giftsData = [
         { name: "Духи", icon: "💐", price: 10 },
         { name: "Сердце", icon: "💖", price: 25 },
         { name: "Торт", icon: "🎂", price: 50 },
-        { name: "Звезда", icon: "⭐", price: 100 },
+        { name: "Кольцо", icon: "💍", price: 100 },
         { name: "Бриллиант", icon: "💎", price: 250 },
         { name: "Корона", icon: "👑", price: 500 }
     ];
 
     window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('user-stars').innerText = userStars;
-        document.getElementById('profile-id-input').value = userId;
-        document.getElementById('profile-name-input').value = username;
         document.getElementById('header-username').innerText = '🎁 ' + username;
-        document.getElementById('ref-link-input').value = 'https://t.me/giftcasebot?start=' + userId;
-        
-        buildRouletteTrack();
+        buildTrack('roulette-track');
         renderInventory();
     });
 
     function switchRouletteMode(mode) {
         if (isSpinning) return;
         currentMode = mode;
-        playClickSound();
-
         document.querySelectorAll('.switch-tab').forEach(el => el.classList.remove('active'));
         document.getElementById('tab-' + mode).classList.add('active');
 
         const spinBtn = document.getElementById('spin-btn');
         const duelStatus = document.getElementById('duel-status-text');
+        const singleBox = document.getElementById('single-roulette-box');
+        const duelBox = document.getElementById('duel-arena-box');
 
-        if (mode === 'paid') {
-            document.getElementById('case-title').innerText = 'Подарочный кейс';
-            document.getElementById('case-desc').innerText = 'Испытай удачу и выиграй эксклюзивный подарок!';
-            spinBtn.innerText = 'Крутить (25 ⭐)';
-            spinBtn.style.display = 'block';
+        if (mode === 'paid' || mode === 'free') {
+            document.getElementById('case-title').innerText = mode === 'paid' ? 'Подарочный кейс' : 'FREE Кейс';
+            spinBtn.innerText = mode === 'paid' ? 'Крутить (25 ⭐)' : 'Крутить Бесплатно';
+            singleBox.style.display = 'block';
+            duelBox.style.display = 'none';
             duelStatus.style.display = 'none';
+            buildTrack('roulette-track');
         } else if (mode === 'duel') {
             document.getElementById('case-title').innerText = 'PvP Дуэль (25 ⭐)';
-            document.getElementById('case-desc').innerText = 'Сразись с реальным игроком или ботом за ценный приз!';
             spinBtn.innerText = 'Найти дуэль (25 ⭐)';
-            spinBtn.style.display = 'block';
+            singleBox.style.display = 'none';
+            duelBox.style.display = 'block';
             duelStatus.style.display = 'none';
-        } else if (mode === 'free') {
-            document.getElementById('case-title').innerText = 'FREE Кейс';
-            document.getElementById('case-desc').innerText = 'Бесплатный прокрут раз в сутки!';
-            spinBtn.innerText = 'Крутить Бесплатно';
-            spinBtn.style.display = 'block';
-            duelStatus.style.display = 'none';
+            buildTrack('my-roulette-track');
+            buildTrack('opponent-roulette-track');
         }
     }
 
-    function buildRouletteTrack() {
-        const track = document.getElementById('roulette-track');
+    function buildTrack(elementId, targetGift = null) {
+        const track = document.getElementById(elementId);
+        if (!track) return;
+        track.style.transition = 'none';
+        track.style.transform = 'translateX(0px)';
         track.innerHTML = '';
+        
         let html = '';
         for (let i = 0; i < 40; i++) {
-            const gift = giftsData[Math.floor(Math.random() * giftsData.length)];
-            html += `<div class="roulette-item" data-name="${gift.name}" data-icon="${gift.icon}">${gift.icon}<span class="label">${gift.price}⭐</span></div>`;
+            let gift = giftsData[Math.floor(Math.random() * giftsData.length)];
+            if (i === 25 && targetGift) gift = targetGift;
+            html += `<div class="roulette-item">${gift.icon}<span class="label">${gift.price}⭐</span></div>`;
         }
         track.innerHTML = html;
     }
 
     function startSpin() {
         if (isSpinning) return;
-        
+
         if (currentMode === 'paid' || currentMode === 'duel') {
             if (userStars < 25) {
-                alert('Недостаточно звездочек на балансе!');
+                alert('Недостаточно звездочек!');
                 return;
             }
             userStars -= 25;
@@ -847,73 +218,74 @@
             document.getElementById('spin-btn').disabled = true;
             document.getElementById('duel-status-text').style.display = 'block';
             document.getElementById('duel-status-text').innerText = 'Поиск противника (10с)...';
-
-            // Отправляем запрос на сервер для поиска дуэли
             socket.emit('find_duel', { userId, username, bet: 25 });
             return;
         }
 
-        executeLocalSpin();
+        executeSingleSpin(giftsData[Math.floor(Math.random() * giftsData.length)]);
     }
 
-    // Слушаем ответ от сервера по дуэли
+    // Обработчик старта дуэли от сервера с двумя рулетками
     socket.on('duel_started', (data) => {
-        if (!isSpinning) return;
-        document.getElementById('duel-status-text').innerText = data.type === 'bot' ? 'Противник не найден, игра с ботом!' : 'Противник найден! Битва!';
-        
-        setTimeout(() => {
-            let win = false;
-            if (data.type === 'bot') {
-                // Бот выигрывает в 60% случаев, игрок в 40%
-                win = Math.random() > 0.60;
-            } else {
-                win = Math.random() >= 0.5;
-            }
+        document.getElementById('duel-status-text').innerText = `Соперник найден: ${data.opponentName}! Вращение...`;
+        document.getElementById('opponent-label-box').innerText = `🔴 Рулетка соперника (${data.opponentName}):`;
 
-            if (win) {
-                const wonGift = giftsData[Math.floor(Math.random() * giftsData.length)];
-                finishSpinAnimation(wonGift, 'Победа в дуэли! Вы забрали приз!');
+        // Заполняем треки с фиксированными победными подарками на позиции 25
+        buildTrack('my-roulette-track', data.myGift);
+        buildTrack('opponent-roulette-track', data.opponentGift);
+
+        setTimeout(() => {
+            const itemWidth = 75;
+            const targetIndex = 25;
+            const distance = -(targetIndex * itemWidth) + 140;
+
+            // Запускаем обе рулетки одновременно
+            const myTrack = document.getElementById('my-roulette-track');
+            const oppTrack = document.getElementById('opponent-roulette-track');
+
+            myTrack.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.15, 1)';
+            myTrack.style.transform = `translateX(${distance}px)`;
+
+            oppTrack.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.15, 1)';
+            oppTrack.style.transform = `translateX(${distance}px)`;
+        }, 100);
+
+        setTimeout(() => {
+            isSpinning = false;
+            document.getElementById('spin-btn').disabled = false;
+            document.getElementById('duel-status-text').style.display = 'none';
+
+            if (data.isWinner) {
+                inventory.push(data.myGift);
+                saveInventory();
+                showModal(data.myGift.icon, 'Победа в Дуэли! 🎉', `Вы переиграли соперника и забрали ${data.myGift.name} (${data.myGift.price}⭐)!`);
             } else {
-                finishSpinAnimation(null, 'Поражение в дуэли. Повезет в следующий раз!');
+                showModal('💀', 'Поражение!', `Соперник (${data.opponentName}) оказался удачливее и выиграл раунд.`);
             }
-        }, 1500);
+        }, 4300);
     });
 
-    function executeLocalSpin() {
+    function executeSingleSpin(winningGift) {
         isSpinning = true;
         document.getElementById('spin-btn').disabled = true;
-        buildRouletteTrack();
+        buildTrack('roulette-track', winningGift);
 
         const track = document.getElementById('roulette-track');
-        const itemWidth = 85;
-        const targetIndex = 25;
-        const randomOffset = (Math.random() * 60) - 30;
-        const totalDistance = -(targetIndex * itemWidth) + 160 + randomOffset;
-
-        track.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.15, 1)';
-        track.style.transform = `translateX(${totalDistance}px)`;
+        const itemWidth = 75;
+        const distance = -(25 * itemWidth) + 140;
 
         setTimeout(() => {
-            const wonGift = giftsData[Math.floor(Math.random() * giftsData.length)];
-            finishSpinAnimation(wonGift, `Вы выиграли ${wonGift.name}!`);
-        }, 4000);
-    }
+            track.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.15, 1)';
+            track.style.transform = `translateX(${distance}px)`;
+        }, 50);
 
-    function finishSpinAnimation(gift, descText) {
-        const track = document.getElementById('roulette-track');
-        track.style.transition = 'none';
-        track.style.transform = 'translateX(0px)';
-        isSpinning = false;
-        document.getElementById('spin-btn').disabled = false;
-        document.getElementById('duel-status-text').style.display = 'none';
-
-        if (gift) {
-            inventory.push(gift);
+        setTimeout(() => {
+            isSpinning = false;
+            document.getElementById('spin-btn').disabled = false;
+            inventory.push(winningGift);
             saveInventory();
-            showModal(gift.icon, 'Поздравляем!', descText);
-        } else {
-            showModal('❌', 'Увы!', descText);
-        }
+            showModal(winningGift.icon, 'Поздравляем!', `Вы выиграли ${winningGift.name} (${winningGift.price}⭐)!`);
+        }, 4200);
     }
 
     function updateBalance() {
@@ -930,36 +302,13 @@
         const grid = document.getElementById('inventory-grid');
         if (inventory.length === 0) {
             grid.innerHTML = '<div class="empty-inv">Инвентарь пока пуст. Откройте кейс!</div>';
-            document.getElementById('inventory-badge').classList.remove('active');
             return;
         }
-
-        document.getElementById('inventory-badge').classList.add('active');
         let html = '';
-        inventory.forEach((item, index) => {
-            html += `
-                <div class="inventory-item">
-                    ${item.icon}
-                    <span class="item-name">${item.name}</span>
-                    <button class="withdraw-btn" onclick="withdrawItem(${index})">Вывести</button>
-                    <button class="sell-btn" onclick="sellItem(${index})">Продать ${item.price}⭐</button>
-                </div>
-            `;
+        inventory.forEach((item) => {
+            html += `<div class="inventory-item">${item.icon}<span class="item-name">${item.name} (${item.price}⭐)</span></div>`;
         });
         grid.innerHTML = html;
-    }
-
-    function withdrawItem(index) {
-        alert('Запрос на вывод подарка отправлен боту!');
-        inventory.splice(index, 1);
-        saveInventory();
-    }
-
-    function sellItem(index) {
-        userStars += inventory[index].price;
-        updateBalance();
-        inventory.splice(index, 1);
-        saveInventory();
     }
 
     function showModal(icon, title, desc) {
@@ -974,98 +323,10 @@
     }
 
     function switchScreen(screenName, btnEl) {
-        playClickSound();
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
         document.getElementById('screen-' + screenName).classList.add('active');
         btnEl.classList.add('active');
-    }
-
-    function saveProfile() {
-        username = document.getElementById('profile-name-input').value || 'Игрок';
-        localStorage.setItem('tg_username', username);
-        document.getElementById('header-username').innerText = '🎁 ' + username;
-        alert('Имя успешно сохранено!');
-    }
-
-    function copyToClipboard(elementId) {
-        const input = document.getElementById(elementId);
-        input.select();
-        navigator.clipboard.writeText(input.value);
-        alert('Скопировано в буфер обмена!');
-    }
-
-    function shareRefLink() {
-        alert('Ссылка для приглашения скопирована!');
-    }
-
-    function openDepositModal() {
-        document.getElementById('deposit-modal').style.display = 'flex';
-    }
-    function closeDepositModal() {
-        document.getElementById('deposit-modal').style.display = 'none';
-        document.getElementById('deposit-info-box').style.display = 'none';
-    }
-
-    function selectDeposit(type) {
-        const box = document.getElementById('deposit-info-box');
-        box.style.display = 'block';
-        if (type === 'sbp') {
-            box.innerHTML = 'Для поплнения по СБП переведите средства на карту: <b>2200 7000 1234 5678</b> (Тинькофф/Сбер) и отправьте чек в поддержку.';
-        } else {
-            box.innerHTML = 'Оплата через Telegram Stars доступна напрямую через официальный счет бота.';
-        }
-    }
-
-    function openExternalUrl(url) {
-        window.open(url, '_blank');
-    }
-
-    let musicEnabled = true;
-    let sfxEnabled = true;
-
-    function toggleMusicSwitch() {
-        musicEnabled = !musicEnabled;
-        document.getElementById('toggle-music').classList.toggle('active', musicEnabled);
-    }
-
-    function toggleSfxSwitch() {
-        sfxEnabled = !sfxEnabled;
-        document.getElementById('toggle-sfx').classList.toggle('active', sfxEnabled);
-    }
-
-    function playClickSound() {}
-
-    function requestAdminAuth() {
-        document.getElementById('admin-auth-modal').style.display = 'flex';
-    }
-    function closeAdminAuthModal() {
-        document.getElementById('admin-auth-modal').style.display = 'none';
-    }
-    function verifyAdminPass() {
-        const pass = document.getElementById('admin-pass-input').value;
-        if (pass === 'VLAD245FRICK929HAUS868BEZBELETNIK34') {
-            closeAdminAuthModal();
-            document.getElementById('admin-modal').style.display = 'flex';
-        } else {
-            alert('Неверный пароль!');
-        }
-    }
-    function closeAdminModal() {
-        document.getElementById('admin-modal').style.display = 'none';
-    }
-    function adminGrantStars() {
-        const amount = parseInt(document.getElementById('admin-stars-amount').value) || 0;
-        userStars += amount;
-        updateBalance();
-        alert(`Успешно выдано ${amount} ⭐!`);
-        closeAdminModal();
-    }
-    function adminSelfAddStars() {
-        userStars += 1000;
-        updateBalance();
-        alert('Вам начислено +1000 ⭐!');
-        closeAdminModal();
     }
 </script>
 </body>
