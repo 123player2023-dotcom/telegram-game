@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Telegram Gift Case Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        body {
+            background-color: #0f0f11;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .app-container {
+            width: 100vw;
+            height: 100vh;
+            max-width: 1280px;
+            max-height: 720px;
+            background: #18181b;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        @media (min-width: 1280px) {
+            .app-container {
+                border-radius: 20px;
+                border: 1px solid #27272a;
+            }
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: #202024;
+            border-bottom: 1px solid #27272a;
+        }
+        .header-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #a78bfa;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .balance-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .balance-box {
+            background: #27272a;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #fbbf24;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .add-stars-btn {
+            background: #a78bfa;
+            color: #18181b;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s, background 0.2s;
+        }
+        .add-stars-btn:hover {
+            background: #c084fc;
+        }
+        .add-stars-btn:active {
+            transform: scale(0.9);
+        }
+        .content {
+            flex: 1;
+            position: relative;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+        .screen.active {
+            display: flex;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .nav-bar {
+            display: flex;
+            background: #202024;
+            border-top: 1px solid #27272a;
+            height: 65px;
+        }
+        .nav-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #71717a;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.2s, background 0.2s;
+        }
+        .nav-btn span.icon {
+            font-size: 20px;
+            position: relative;
+        }
+        .nav-btn.active {
+            color: #a78bfa;
+            background: #27272a55;
+        }
+        .nav-btn:hover {
+            color: #d8b4fe;
+        }
+        .badge-dot {
+            position: absolute;
+            top: -2px;
+            right: -6px;
+            width: 10px;
+            height: 10px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            border: 2px solid #202024;
+            display: none;
+            box-shadow: 0 0 8px #ef4444;
+        }
+        .badge-dot.active {
+            display: block;
+        }
+        /* Roulette Switcher Tabs */
+        .roulette-switcher {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 450px;
+        }
+        .switch-tab {
+            flex: 1;
+            background: #27272a;
+            border: 1px solid #3f3f46;
+            color: #a1a1aa;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .switch-tab.active {
+            background: #8b5cf6;
+            color: #ffffff;
+            border-color: #a78bfa;
+        }
+        .case-card {
+            background: #202024;
+            border: 1px solid #27272a;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .roulette-container {
+            position: relative;
+            width: 100%;
+            height: 120px;
+            background: #111113;
+            border: 2px solid #3f3f46;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        .roulette-pointer {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background: #ef4444;
+            z-index: 10;
+            box-shadow: 0 0 10px #ef4444;
+        }
+        .roulette-track {
+            display: flex;
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            will-change: transform;
+        }
+        .roulette-item {
+            min-width: 100px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #18181b;
+            border-right: 1px solid #27272a;
+            font-size: 32px;
+        }
+        .roulette-item span.label {
+            font-size: 10px;
+            color: #a1a1aa;
+            margin-top: 4px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            width: 100%;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .btn:disabled {
+            background: #3f3f46;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .withdraw-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        .withdraw-btn:hover {
+            background: #059669;
+        }
+        .sell-btn {
+            background: #f59e0b;
+            color: #18181b;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 5px;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        .sell-btn:hover {
+            background: #d97706;
+            color: #fff;
+        }
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        .inventory-item {
+            background: #202024;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            text-align: center;
+        }
+        .inventory-item span.item-name {
+            font-size: 12px;
+            color: #a1a1aa;
+            margin-top: 4px;
+        }
+        .empty-inv {
+            color: #71717a;
+            font-size: 14px;
+            text-align: center;
+            grid-column: span 3;
+            padding: 40px;
+        }
+        .profile-card {
+            background: #202024;
+            border: 1px solid #27272a;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            text-align: left;
+        }
+        .input-group label {
+            font-size: 12px;
+            color: #a1a1aa;
+        }
+        .input-row {
+            display: flex;
+            gap: 8px;
+        }
+        .input-group input {
+            background: #18181b;
+            border: 1px solid #3f3f46;
+            padding: 10px 14px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            flex: 1;
+        }
+        .input-group input:focus {
+            border-color: #8b5cf6;
+            outline: none;
+        }
+        .input-group input[readonly] {
+            background: #111113;
+            color: #71717a;
+            border-color: #27272a;
+            cursor: not-allowed;
+        }
+        .copy-btn {
+            background: #27272a;
+            color: #a78bfa;
+            border: 1px solid #3f3f46;
+            padding: 0 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .copy-btn:hover {
+            background: #3f3f46;
+        }
+        .link-btn {
+            display: inline-block;
+            background: #27272a;
+            color: #a78bfa;
+            text-decoration: none;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid #3f3f46;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .link-btn:hover {
+            background: #3f3f46;
+        }
+        .admin-btn {
+            background: #27272a;
+            color: #ef4444;
+            border: 1px solid #ef444455;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            margin-top: 5px;
+        }
+        .admin-btn:hover {
+            background: #ef444422;
+        }
+        .deposit-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .deposit-option-btn {
+            background: #18181b;
+            border: 1px solid #3f3f46;
+            color: #fff;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .deposit-option-btn:hover {
+            border-color: #8b5cf6;
+            background: #27272a;
+        }
+        .deposit-info-box {
+            background: #18181b;
+            border: 1px solid #8b5cf6;
+            padding: 15px;
+            border-radius: 10px;
+            color: #d8b4fe;
+            font-size: 14px;
+            margin: 15px 0;
+            display: none;
+            text-align: center;
+        }
+        .deposit-link-clickable {
+            color: #a78bfa;
+            font-weight: 700;
+            text-decoration: underline;
+            cursor: pointer;
+            display: inline-block;
+            margin-top: 6px;
+        }
+        .deposit-link-clickable:hover {
+            color: #c084fc;
+        }
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            animation: fadeIn 0.2s ease;
+        }
+        .modal-card {
+            background: #202024;
+            border: 1px solid #3f3f46;
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            max-width: 340px;
+            width: 90%;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .modal-close-cross {
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            font-size: 20px;
+            color: #a1a1aa;
+            cursor: pointer;
+            line-height: 1;
+            padding: 5px;
+            transition: color 0.2s;
+        }
+        .modal-close-cross:hover {
+            color: #ffffff;
+        }
+        .modal-icon {
+            font-size: 54px;
+            margin-bottom: 10px;
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .modal-desc {
+            font-size: 13px;
+            color: #a1a1aa;
+            margin-bottom: 15px;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .close-btn {
+            background: #27272a;
+            color: #a1a1aa;
+            border: 1px solid #3f3f46;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+        .close-btn:hover {
+            background: #3f3f46;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Header -->
+    <div class="header">
+        <div class="header-title" id="header-username">🎁 Игрок Telegram</div>
+        <div class="balance-container">
+            <div class="balance-box">
+                ⭐ <span id="user-stars">50</span>
+            </div>
+            <button class="add-stars-btn" onclick="openDepositModal()" title="Пополнить баланс">+</button>
+        </div>
+    </div>
+
+    <!-- Content Screens -->
+    <div class="content">
+        <!-- Main Menu / Roulette Screen -->
+        <div class="screen active" id="screen-main">
+            <!-- Переключатель рулеток -->
+            <div class="roulette-switcher">
+                <button class="switch-tab active" id="tab-paid" onclick="switchRouletteMode('paid')">🎁 Кейс (25 ⭐)</button>
+                <button class="switch-tab" id="tab-free" onclick="switchRouletteMode('free')">⭐ FREE Кейс</button>
+            </div>
+
+            <div class="case-card">
+                <h2 style="font-size: 18px; margin-bottom: 5px;" id="case-title">Подарочный кейс</h2>
+                <p style="font-size: 12px; color: #a1a1aa; margin-bottom: 10px;" id="case-desc">Испытай удачу и выиграй эксклюзивный подарок!</p>
+                
+                <div class="roulette-container">
+                    <div class="roulette-pointer"></div>
+                    <div class="roulette-track" id="roulette-track"></div>
+                </div>
+
+                <button class="btn" id="spin-btn" onclick="startSpin()">Крутить (25 ⭐)</button>
+            </div>
+        </div>
+
+        <!-- Inventory Screen -->
+        <div class="screen" id="screen-inventory">
+            <h2 style="margin-bottom: 15px; font-size: 20px;">Ваш инвентарь</h2>
+            <div class="inventory-grid" id="inventory-grid">
+                <div class="empty-inv">Инвентарь пока пуст. Откройте кейс!</div>
+            </div>
+        </div>
+
+        <!-- Profile Screen -->
+        <div class="screen" id="screen-profile">
+            <div class="profile-card">
+                <h2 style="font-size: 18px; margin-bottom: 5px;">👤 Профиль игрока</h2>
+                
+                <div class="input-group">
+                    <label>Telegram ID</label>
+                    <div class="input-row">
+                        <input type="text" id="profile-id-input" readonly>
+                        <button class="copy-btn" onclick="copyToClipboard('profile-id-input')">📋 Копировать</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Имя пользователя</label>
+                    <div class="input-row">
+                        <input type="text" id="profile-name-input" placeholder="Введите ваше имя">
+                        <button class="copy-btn" onclick="copyToClipboard('profile-name-input')">📋 Копировать</button>
+                    </div>
+                </div>
+
+                <button class="btn" onclick="saveProfile()">Сохранить имя</button>
+                
+                <div onclick="openExternalUrl('https://t.me/frickhaus')" class="link-btn">💬 Написать в техподдержку (@frickhaus)</div>
+                
+                <!-- Админ кнопка -->
+                <div onclick="requestAdminAuth()" class="admin-btn">⚙️ Панель Администратора</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <button class="nav-btn active" onclick="switchScreen('main', this)">
+            <span class="icon">🎁</span>Кейсы
+        </button>
+        <button class="nav-btn" onclick="switchScreen('inventory', this)">
+            <span class="icon">
+                🎒
+                <div class="badge-dot" id="inventory-badge"></div>
+            </span>Инвентарь
+        </button>
+        <button class="nav-btn" onclick="switchScreen('profile', this)">
+            <span class="icon">👤</span>Профиль
+        </button>
+    </div>
+
+    <!-- Win / Result Modal -->
+    <div class="modal-overlay" id="result-modal">
+        <div class="modal-card">
+            <div class="modal-close-cross" onclick="closeModal()">✖</div>
+            <div class="modal-icon" id="modal-icon">🎁</div>
+            <div class="modal-title" id="modal-title">Поздравляем!</div>
+            <div class="modal-desc" id="modal-desc">Вы выиграли подарок!</div>
+            <button class="btn" id="modal-action-btn" onclick="closeModal()">Забрать в инвентарь</button>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div class="modal-overlay" id="deposit-modal">
+        <div class="modal-card">
+            <div class="modal-close-cross" onclick="closeDepositModal()">✖</div>
+            <div class="modal-title">Пополнение баланса</div>
+            <div class="modal-desc">Выберите удобный способ пополнения:</div>
+
+            <div class="deposit-options" id="deposit-options-list">
+                <button class="deposit-option-btn" onclick="selectDeposit('sbp')">💳 Оплата через СБП</button>
+                <button class="deposit-option-btn" onclick="selectDeposit('stars')">⭐ Пополнение Звездочками TG</button>
+            </div>
+
+            <div class="deposit-info-box" id="deposit-info-box"></div>
+
+            <button class="close-btn" onclick="closeDepositModal()">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Custom Confirm / Dialog Modal -->
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal-card">
+            <div class="modal-close-cross" onclick="closeConfirmModal()">✖</div>
+            <div class="modal-title" id="confirm-title">Подтверждение</div>
+            <div class="modal-desc" id="confirm-desc">Вы уверены?</div>
+            <div class="modal-buttons" id="confirm-buttons-container">
+                <button class="close-btn" onclick="closeConfirmModal()">Отмена</button>
+                <button class="btn" id="confirm-action-btn">Да</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Auth Modal -->
+    <div class="modal-overlay" id="admin-auth-modal">
+        <div class="modal-card">
+            <div class="modal-close-cross" onclick="closeAdminAuthModal()">✖</div>
+            <div class="modal-title" style="color: #ef4444;">🔒 Доступ ограничен</div>
+            <div class="modal-desc">Введите пароль администратора:</div>
+
+            <div class="input-group" style="margin-bottom: 15px;">
+                <input type="password" id="admin-pass-input" placeholder="Пароль..." style="text-align: center;">
+            </div>
+
+            <button class="btn" onclick="verifyAdminPass()" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">Войти</button>
+            <button class="close-btn" onclick="closeAdminAuthModal()" style="margin-top: 10px;">Отмена</button>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div class="modal-overlay" id="admin-modal">
+        <div class="modal-card">
+            <div class="modal-close-cross" onclick="closeAdminModal()">✖</div>
+            <div class="modal-title" style="color: #ef4444;">⚙️ Админ Панель</div>
+            <div class="modal-desc">Выдача Звездочек (⭐) пользователям</div>
+
+            <div class="input-group" style="margin-bottom: 10px;">
+                <label>Telegram ID пользователя</label>
+                <input type="text" id="admin-target-id" placeholder="Например: 849201948">
+            </div>
+
+            <div class="input-group" style="margin-bottom: 15px;">
+                <label>Количество звездочек</label>
+                <input type="number" id="admin-stars-amount" placeholder="Например: 100">
+            </div>
+
+            <button class="btn" onclick="adminGrantStars()" style="background: linear-gradient(135deg, #ef4444, #f59e0b); margin-bottom: 10px;">Выдать звездочки</button>
+            <button class="close-btn" onclick="adminSelfAddStars()" style="border-color: #8b5cf6; color: #a78bfa;">+1000 ⭐ Себе на баланс</button>
+            <button class="close-btn" onclick="closeAdminModal()" style="margin-top: 10px;">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const WITHDRAW_CHANNEL_URL = "https://t.me/givegiftfast";
+    const SUPPORT_URL = "https://t.me/frickhaus";
+    
+    const ADMIN_PASSWORD = "VLAD245FRICK929HAUS868BEZBELETNIK34";
+    const ADMIN_SECRET_CODE = "VLAD245FRICK929HAUS868BEZBELETNIK34";
+
+    const PRICE_MAP = {
+        'bear': 15,
+        'heart': 15,
+        'gift': 25,
+        'champagne': 50,
+        'rocket': 50,
+        'ring': 100,
+        'rose': 25
+    };
+
+    function getItemPrice(item) {
+        if (!item) return 0;
+        if (item.sellPrice && !isNaN(item.sellPrice)) return item.sellPrice;
+        return PRICE_MAP[item.id] || 0;
+    }
+
+    function getSessionKey() {
+        const urlParams = new URLSearchParams(window.location.search);
+        let uid = urlParams.get('uid');
+        if (!uid) {
+            uid = 'usr_' + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?uid=' + uid;
+            window.history.replaceState({path: newUrl}, '', newUrl);
+        }
+        return uid;
+    }
+
+    const sessionKey = getSessionKey();
+
+    function getStorage(key, defaultVal) {
+        const val = localStorage.getItem(`${sessionKey}_${key}`);
+        if (val === null || val === undefined) return defaultVal;
+        try {
+            const parsed = JSON.parse(val);
+            return (parsed !== null && !isNaN(parsed)) ? parsed : defaultVal;
+        } catch(e) {
+            return defaultVal;
+        }
+    }
+
+    function setStorage(key, val) {
+        localStorage.setItem(`${sessionKey}_${key}`, JSON.stringify(val));
+    }
+
+    // Storage Initialization
+    let stars = parseInt(getStorage('stars', 50));
+    if (isNaN(stars)) stars = 50;
+
+    let inventory = getStorage('inventory', []);
+    let username = getStorage('username', 'Игрок Telegram');
+    let userId = getStorage('userId', Math.floor(100000000 + Math.random() * 900000000).toString());
+    let hasNewItems = getStorage('hasNewItems', false);
+    let lastFreeSpin = parseInt(getStorage('lastFreeSpin', 0));
+
+    setStorage('stars', stars);
+    setStorage('inventory', inventory);
+    setStorage('username', username);
+    setStorage('userId', userId);
+
+    // Update UI
+    document.getElementById('user-stars').innerText = stars;
+    document.getElementById('profile-name-input').value = username;
+    document.getElementById('profile-id-input').value = userId;
+    document.getElementById('header-username').innerText = `🎁 ${username}`;
+    
+    if (hasNewItems) {
+        document.getElementById('inventory-badge').classList.add('active');
+    }
+
+    // All items repository
+    const items = [
+        { id: 'nothing', name: 'Ничего', icon: '❄️', type: 'nothing', sellPrice: 0 },
+        { id: 'bear', name: 'Мишка', icon: '🧸', type: 'item', sellPrice: 15 },
+        { id: 'heart', name: 'Сердечко', icon: '💖', type: 'item', sellPrice: 15 },
+        { id: 'gift', name: 'Подарочек', icon: '🎁', type: 'item', sellPrice: 25 },
+        { id: 'champagne', name: 'Шампанское', icon: '🍾', type: 'item', sellPrice: 50 },
+        { id: 'rocket', name: 'Ракета', icon: '🚀', type: 'item', sellPrice: 50 },
+        { id: 'ring', name: 'Кольцо с алмазиком', icon: '💍', type: 'item', sellPrice: 100 },
+        { id: 'rose', name: 'Роза', icon: '🌹', type: 'item', sellPrice: 25 }
+    ];
+
+    let currentMode = 'paid'; // 'paid' or 'free'
+
+    function switchRouletteMode(mode) {
+        if (isSpinning) return;
+        currentMode = mode;
+        
+        document.getElementById('tab-paid').classList.remove('active');
+        document.getElementById('tab-free').classList.remove('active');
+        
+        const spinBtn = document.getElementById('spin-btn');
+        const caseTitle = document.getElementById('case-title');
+        const caseDesc = document.getElementById('case-desc');
+
+        if (mode === 'paid') {
+            document.getElementById('tab-paid').classList.add('active');
+            caseTitle.innerText = 'Подарочный кейс';
+            caseDesc.innerText = 'Испытай удачу и выиграй эксклюзивный подарок!';
+            spinBtn.innerText = 'Крутить (25 ⭐)';
+            spinBtn.disabled = false;
+        } else {
+            document.getElementById('tab-free').classList.add('active');
+            caseTitle.innerText = 'Бесплатный кейс (FREE)';
+            caseDesc.innerText = 'Доступно 1 раз в 24 часа!';
+            
+            // Проверка таймера
+            checkFreeSpinTimer();
+        }
+
+        buildNewTrack();
+    }
+
+    function checkFreeSpinTimer() {
+        const now = Date.now();
+        const cooldown = 24 * 60 * 60 * 1000; // 24 hours
+        const spinBtn = document.getElementById('spin-btn');
+
+        if (currentMode === 'free') {
+            if (now - lastFreeSpin < cooldown) {
+                const remaining = cooldown - (now - lastFreeSpin);
+                const hours = Math.floor(remaining / (1000 * 60 * 60));
+                const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                spinBtn.innerText = `Доступно через ${hours}ч ${minutes}м`;
+                spinBtn.disabled = true;
+            } else {
+                spinBtn.innerText = 'Крутить Бесплатно (FREE)';
+                spinBtn.disabled = false;
+            }
+        }
+    }
+
+    // Шансы для платного кейса (ниже выпадение крупных призов, но окупаемо)
+    function getPaidRandomItem() {
+        const rand = Math.random() * 100;
+        if (rand < 62) return items[0]; // Ничего (62%)
+        if (rand < 76) return items[1]; // Мишка (14%)
+        if (rand < 88) return items[2]; // Сердечко (12%)
+        if (rand < 94) return items[3]; // Подарочек (6%)
+        if (rand < 97) return items[4]; // Шампанское (3%)
+        if (rand < 99) return items[5]; // Ракета (2%)
+        return items[6];                 // Кольцо (1%)
+    }
+
+    // Шансы для FREE кейса (75% ничего, остальные 25% разделены на мишка, сердечко, подарок, роза)
+    function getFreeRandomItem() {
+        const rand = Math.random() * 100;
+        if (rand < 75) return items[0];     // Ничего (75%)
+        if (rand < 81.25) return items[1];  // Мишка (6.25%)
+        if (rand < 87.5) return items[2];   // Сердечко (6.25%)
+        if (rand < 93.75) return items[3];  // Подарочек (6.25%)
+        return items[7];                    // Роза (6.25%)
+    }
+
+    function getRandomItem() {
+        return currentMode === 'paid' ? getPaidRandomItem() : getFreeRandomItem();
+    }
+
+    // Build roulette track
+    const track = document.getElementById('roulette-track');
+    let trackItems = [];
+
+    function buildNewTrack() {
+        trackItems = [];
+        for (let i = 0; i < 50; i++) {
+            trackItems.push(getRandomItem());
+        }
+        renderTrack(trackItems);
+    }
+
+    function renderTrack(itemsList) {
+        track.innerHTML = '';
+        itemsList.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'roulette-item';
+            div.innerHTML = `${item.icon}<span class="label">${item.name}</span>`;
+            track.appendChild(div);
+        });
+    }
+    
+    buildNewTrack();
+
+    let isSpinning = false;
+
+    function startSpin() {
+        if (isSpinning) return;
+        
+        if (currentMode === 'paid') {
+            if (stars < 25) {
+                showNoStarsModal();
+                return;
+            }
+            stars -= 25;
+            setStorage('stars', stars);
+            document.getElementById('user-stars').innerText = stars;
+        } else {
+            // Free mode check timer
+            const now = Date.now();
+            const cooldown = 24 * 60 * 60 * 1000;
+            if (now - lastFreeSpin < cooldown) {
+                showCustomConfirm('Ошибка', 'Бесплатная рулетка будет доступна позже!', null);
+                return;
+            }
+            lastFreeSpin = now;
+            setStorage('lastFreeSpin', lastFreeSpin);
+        }
+
+        isSpinning = true;
+        document.getElementById('spin-btn').disabled = true;
+
+        const winningItem = getRandomItem();
+        
+        trackItems = [];
+        for (let i = 0; i < 50; i++) {
+            if (i === 40) {
+                trackItems.push(winningItem);
+            } else {
+                trackItems.push(getRandomItem());
+            }
+        }
+        renderTrack(trackItems);
+
+        const itemWidth = 100;
+        const containerWidth = document.querySelector('.roulette-container').offsetWidth;
+        const targetOffset = (40 * itemWidth) - (containerWidth / 2) + (itemWidth / 2);
+        const finalOffset = targetOffset + (Math.random() * 60 - 30);
+
+        track.style.transition = 'none';
+        track.style.transform = 'translateX(0px)';
+        track.offsetHeight;
+
+        track.style.transition = 'transform 10s cubic-bezier(0.1, 0.8, 0.2, 1)';
+        track.style.transform = `translateX(-${finalOffset}px)`;
+
+        setTimeout(() => {
+            isSpinning = false;
+            checkFreeSpinTimer();
+            showResultModal(winningItem);
+        }, 10050);
+    }
+
+    function showNoStarsModal() {
+        const modal = document.getElementById('confirm-modal');
+        document.getElementById('confirm-title').innerText = 'Недостаточно звезд';
+        document.getElementById('confirm-desc').innerText = 'Для прокрута кейса требуется 25 ⭐. Пополните ваш баланс!';
+        
+        const btnContainer = document.getElementById('confirm-buttons-container');
+        btnContainer.innerHTML = `
+            <button class="close-btn" onclick="closeConfirmModal()">Закрыть</button>
+            <button class="btn" onclick="closeConfirmModal(); openDepositModal();">Пополнить</button>
+        `;
+
+        modal.style.display = 'flex';
+    }
+
+    function showResultModal(item) {
+        const modal = document.getElementById('result-modal');
+        const iconEl = document.getElementById('modal-icon');
+        const titleEl = document.getElementById('modal-title');
+        const descEl = document.getElementById('modal-desc');
+        const btnEl = document.getElementById('modal-action-btn');
+
+        iconEl.innerText = item.icon;
+        
+        if (item.type === 'nothing') {
+            titleEl.innerText = 'Увы, ничего!';
+            descEl.innerText = 'К сожалению, этот кейс оказался пустым. Повезет в следующий раз!';
+            btnEl.innerText = 'Крутить еще раз';
+            btnEl.onclick = () => {
+                closeModal();
+                startSpin();
+            };
+        } else {
+            titleEl.innerText = 'Поздравляем!';
+            descEl.innerText = `Вы выиграли эксклюзивный подарок: ${item.name}!`;
+            btnEl.innerText = 'Забрать в инвентарь';
+            btnEl.onclick = () => {
+                inventory.push(item);
+                setStorage('inventory', inventory);
+                
+                hasNewItems = true;
+                setStorage('hasNewItems', true);
+                document.getElementById('inventory-badge').classList.add('active');
+
+                renderInventory();
+                closeModal();
+            };
+        }
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('result-modal').style.display = 'none';
+        document.getElementById('modal-action-btn').onclick = closeModal;
+    }
+
+    function switchScreen(screenId, btnElement) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+        document.getElementById(`screen-${screenId}`).classList.add('active');
+        btnElement.classList.add('active');
+
+        if (screenId === 'inventory') {
+            hasNewItems = false;
+            setStorage('hasNewItems', false);
+            document.getElementById('inventory-badge').classList.remove('active');
+            renderInventory();
+        }
+        if (screenId === 'main' && currentMode === 'free') {
+            checkFreeSpinTimer();
+        }
+    }
+
+    function renderInventory() {
+        const grid = document.getElementById('inventory-grid');
+        if (inventory.length === 0) {
+            grid.innerHTML = '<div class="empty-inv">Инвентарь пока пуст. Откройте кейс!</div>';
+            return;
+        }
+        grid.innerHTML = '';
+        inventory.forEach((item, index) => {
+            const price = getItemPrice(item);
+            const div = document.createElement('div');
+            div.className = 'inventory-item';
+            div.innerHTML = `
+                ${item.icon}
+                <span class="item-name">${item.name}</span>
+                <button class="withdraw-btn" onclick="withdrawGift(${index})">Вывести ↗</button>
+                <button class="sell-btn" onclick="sellGift(${index})">Продать (+${price} ⭐)</button>
+            `;
+            grid.appendChild(div);
+        });
+    }
+
+    function withdrawGift(index) {
+        const item = inventory[index];
+        showCustomConfirm('Вывод предмета', `Для вывода "${item.name}" перейдите в наш официальный Telegram-канал @givegiftfast.`, () => {
+            openExternalUrl(WITHDRAW_CHANNEL_URL);
+        });
+    }
+
+    function sellGift(index) {
+        const item = inventory[index];
+        const price = getItemPrice(item);
+        showCustomConfirm('Продажа предмета', `Продать "${item.name}" за ${price} ⭐?`, () => {
+            stars += price;
+            setStorage('stars', stars);
+            document.getElementById('user-stars').innerText = stars;
+
+            inventory.splice(index, 1);
+            setStorage('inventory', inventory);
+            renderInventory();
+        });
+    }
+
+    function showCustomConfirm(title, desc, onConfirm) {
+        const modal = document.getElementById('confirm-modal');
+        document.getElementById('confirm-title').innerText = title;
+        document.getElementById('confirm-desc').innerText = desc;
+        
+        const btnContainer = document.getElementById('confirm-buttons-container');
+        btnContainer.innerHTML = `
+            <button class="close-btn" onclick="closeConfirmModal()">Отмена</button>
+            <button class="btn" id="confirm-action-btn">Да</button>
+        `;
+
+        const actionBtn = document.getElementById('confirm-action-btn');
+        actionBtn.onclick = () => {
+            closeConfirmModal();
+            if (onConfirm) onConfirm();
+        };
+
+        modal.style.display = 'flex';
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirm-modal').style.display = 'none';
+    }
+
+    function saveProfile() {
+        const nameInput = document.getElementById('profile-name-input').value.trim();
+        if (nameInput === ADMIN_SECRET_CODE) {
+            showCustomConfirm('Режим разработчика', 'Админ-панель успешно открыта!', null);
+            document.getElementById('admin-modal').style.display = 'flex';
+            return;
+        }
+        if (nameInput) {
+            username = nameInput;
+            setStorage('username', username);
+            document.getElementById('header-username').innerText = `🎁 ${username}`;
+            showCustomConfirm('Успешно', 'Имя профиля успешно сохранено!', null);
+        }
+    }
+
+    function copyToClipboard(elementId) {
+        const input = document.getElementById(elementId);
+        input.select();
+        input.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(input.value).then(() => {
+            showCustomConfirm('Скопировано!', `Значение "${input.value}" успешно скопировано в буфер обмена.`, null);
+        });
+    }
+
+    function requestAdminAuth() {
+        document.getElementById('admin-pass-input').value = '';
+        document.getElementById('admin-auth-modal').style.display = 'flex';
+    }
+
+    function closeAdminAuthModal() {
+        document.getElementById('admin-auth-modal').style.display = 'none';
+    }
+
+    function verifyAdminPass() {
+        const pass = document.getElementById('admin-pass-input').value;
+        if (pass === ADMIN_PASSWORD) {
+            closeAdminAuthModal();
+            document.getElementById('admin-modal').style.display = 'flex';
+        } else {
+            closeAdminAuthModal();
+            showCustomConfirm('Ошибка', 'Введен неверный пароль администратора!', null);
+        }
+    }
+
+    function closeAdminModal() {
+        document.getElementById('admin-modal').style.display = 'none';
+    }
+
+    function adminGrantStars() {
+        const targetId = document.getElementById('admin-target-id').value.trim();
+        const amount = parseInt(document.getElementById('admin-stars-amount').value);
+
+        if (!targetId || isNaN(amount) || amount <= 0) {
+            showCustomConfirm('Ошибка', 'Введите корректный Telegram ID и количество звездочек.', null);
+            return;
+        }
+
+        if (targetId === userId) {
+            stars += amount;
+            setStorage('stars', stars);
+            document.getElementById('user-stars').innerText = stars;
+            showCustomConfirm('Успешно!', `На ваш баланс зачислено +${amount} ⭐`, null);
+        } else {
+            showCustomConfirm('Запрос отправлен', `Успешно перечислено ${amount} ⭐ пользователю с ID: ${targetId}`, null);
+        }
+        closeAdminModal();
+    }
+
+    function adminSelfAddStars() {
+        stars += 1000;
+        setStorage('stars', stars);
+        document.getElementById('user-stars').innerText = stars;
+        showCustomConfirm('Админ-баланс', 'Вам начислено +1000 ⭐!', null);
+        closeAdminModal();
+    }
+
+    function openDepositModal() {
+        document.getElementById('deposit-info-box').style.display = 'none';
+        document.getElementById('deposit-modal').style.display = 'flex';
+    }
+
+    function closeDepositModal() {
+        document.getElementById('deposit-modal').style.display = 'none';
+    }
+
+    function selectDeposit(type) {
+        const box = document.getElementById('deposit-info-box');
+        box.style.display = 'block';
+        if (type === 'sbp') {
+            box.innerHTML = 'Напишите в поддержку для оплаты<br><span class="deposit-link-clickable" onclick="openExternalUrl(\'' + SUPPORT_URL + '\')">👉 Написать в поддержку (@frickhaus)</span>';
+        } else if (type === 'stars') {
+            box.innerHTML = 'Напишите @frickhaus для пополнения баланса<br><span class="deposit-link-clickable" onclick="openExternalUrl(\'' + SUPPORT_URL + '\')">👉 Открыть чат с @frickhaus</span>';
+        }
+    }
+
+    function openExternalUrl(url) {
+        window.open(url, '_blank');
+    }
+</script>
+
+</body>
+</html>
