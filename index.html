@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Telegram Gift Case Game</title>
-    <!-- Telegram WebApp SDK с защитой от таймаута в обычном браузере -->
-    <script src="https://telegram.org/js/telegram-web-app.js" async onerror="console.log('Telegram SDK не загружен')"></script>
+    <title>Telegram Gift Case Game (Local Test)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -132,7 +130,7 @@
             background: none;
             border: none;
             color: #71717a;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
             display: flex;
             flex-direction: column;
@@ -144,7 +142,7 @@
             transition: color 0.2s;
         }
         .nav-btn span.icon {
-            font-size: 20px;
+            font-size: 18px;
             position: relative;
         }
         .nav-btn.active {
@@ -276,6 +274,11 @@
             cursor: pointer;
             margin-top: 6px;
             width: 100%;
+        }
+        .withdraw-btn:disabled {
+            background: #3f3f46;
+            color: #a1a1aa;
+            cursor: not-allowed;
         }
         .sell-btn {
             background: #f59e0b;
@@ -498,6 +501,32 @@
             cursor: pointer;
             width: 100%;
         }
+        .ref-stat-box {
+            display: flex;
+            justify-content: space-between;
+            background: #18181b;
+            border: 1px solid #3f3f46;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .ref-stat-item {
+            text-align: center;
+            flex: 1;
+        }
+        .ref-stat-item:first-child {
+            border-right: 1px solid #27272a;
+        }
+        .ref-stat-val {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fbbf24;
+        }
+        .ref-stat-lbl {
+            font-size: 11px;
+            color: #a1a1aa;
+            margin-top: 2px;
+        }
     </style>
 </head>
 <body>
@@ -505,7 +534,7 @@
 <div class="app-container">
     <!-- Header -->
     <div class="header">
-        <div class="header-title" id="header-username">🎁 Игрок Telegram</div>
+        <div class="header-title" id="header-username">🎁 Игрок (Тест)</div>
         <div class="balance-container">
             <div class="balance-box">
                 ⭐ <span id="user-stars">50</span>
@@ -544,13 +573,42 @@
             </div>
         </div>
 
+        <!-- Referral Screen -->
+        <div class="screen" id="screen-referral">
+            <div class="profile-card">
+                <h2 style="font-size: 17px; margin-bottom: 4px;">👥 Пригласи друзей</h2>
+                <p style="font-size: 12px; color: #a1a1aa; margin-bottom: 8px;">Получай +10 ⭐ за каждого друга, который сделает прокрут!</p>
+
+                <div class="ref-stat-box">
+                    <div class="ref-stat-item">
+                        <div class="ref-stat-val" id="ref-count">0</div>
+                        <div class="ref-stat-lbl">Приглашено</div>
+                    </div>
+                    <div class="ref-stat-item">
+                        <div class="ref-stat-val" id="ref-earned">0 ⭐</div>
+                        <div class="ref-stat-lbl">Заработано</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Ваша реферальная ссылка</label>
+                    <div class="input-row">
+                        <input type="text" id="ref-link-input" readonly>
+                        <button class="copy-btn" onclick="copyToClipboard('ref-link-input')">📋</button>
+                    </div>
+                </div>
+
+                <button class="btn" onclick="shareRefLink()">🚀 Пригласить друзей</button>
+            </div>
+        </div>
+
         <!-- Profile Screen -->
         <div class="screen" id="screen-profile">
             <div class="profile-card">
                 <h2 style="font-size: 17px; margin-bottom: 4px;">👤 Профиль игрока</h2>
                 
                 <div class="input-group">
-                    <label>Telegram ID</label>
+                    <label>Telegram ID (Локальный)</label>
                     <div class="input-row">
                         <input type="text" id="profile-id-input" readonly>
                         <button class="copy-btn" onclick="copyToClipboard('profile-id-input')">📋</button>
@@ -584,6 +642,9 @@
                 🎒
                 <div class="badge-dot" id="inventory-badge"></div>
             </span>Инвентарь
+        </button>
+        <button class="nav-btn" onclick="switchScreen('referral', this)">
+            <span class="icon">👥</span>Друзья
         </button>
         <button class="nav-btn" onclick="switchScreen('profile', this)">
             <span class="icon">👤</span>Профиль
@@ -669,19 +730,17 @@
 </div>
 
 <script>
-    // Безопасная инициализация Telegram WebApp с защитой от зависания в браузере
-    const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
-    if (tg) {
-        try {
-            tg.ready();
-            tg.expand();
-        } catch (e) {
-            console.log('WebApp error:', e);
-        }
-    }
+    // Эмуляция Telegram WebApp для локального теста
+    const tg = window.Telegram?.WebApp || {
+        initDataUnsafe: {
+            user: { id: 777888999, first_name: "Тестовый Игрок" }
+        },
+        openTelegramLink: (url) => window.open(url, '_blank')
+    };
 
     const WITHDRAW_CHANNEL_URL = "https://t.me/givegiftfast";
     const SUPPORT_URL = "https://t.me/frickhaus";
+    const BOT_USERNAME = "givegift_fast_bot";
     
     const ADMIN_PASSWORD = "VLAD245FRICK929HAUS868BEZBELETNIK34";
     const ADMIN_SECRET_CODE = "VLAD245FRICK929HAUS868BEZBELETNIK34";
@@ -702,21 +761,7 @@
         return PRICE_MAP[item.id] || 0;
     }
 
-    function getSessionKey() {
-        if (tg?.initDataUnsafe?.user?.id) {
-            return 'tg_' + tg.initDataUnsafe.user.id;
-        }
-        const urlParams = new URLSearchParams(window.location.search);
-        let uid = urlParams.get('uid');
-        if (!uid) {
-            uid = 'usr_' + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
-            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?uid=' + uid;
-            window.history.replaceState({path: newUrl}, '', newUrl);
-        }
-        return uid;
-    }
-
-    const sessionKey = getSessionKey();
+    const sessionKey = 'local_test_user_' + (tg.initDataUnsafe?.user?.id || 'default');
 
     function getStorage(key, defaultVal) {
         const val = localStorage.getItem(`${sessionKey}_${key}`);
@@ -738,24 +783,45 @@
 
     let inventory = getStorage('inventory', []);
     
-    let defaultUsername = tg?.initDataUnsafe?.user?.first_name || 'Игрок Telegram';
-    let defaultUserId = tg?.initDataUnsafe?.user?.id?.toString() || Math.floor(100000000 + Math.random() * 900000000).toString();
+    let defaultUsername = tg.initDataUnsafe?.user?.first_name || 'Тестовый Игрок';
+    let defaultUserId = tg.initDataUnsafe?.user?.id?.toString() || '777888999';
 
     let username = getStorage('username', defaultUsername);
     let userId = getStorage('userId', defaultUserId);
     let hasNewItems = getStorage('hasNewItems', false);
     let lastFreeSpin = parseInt(getStorage('lastFreeSpin', 0));
 
+    // Реферальная система
+    let refCount = parseInt(getStorage('refCount', 0));
+    let refEarned = parseInt(getStorage('refEarned', 0));
+    let hasSpinned = getStorage('hasSpinned', false);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const startParam = urlParams.get('startapp') || urlParams.get('ref');
+    let hasBeenReferred = getStorage('hasBeenReferred', false);
+
+    if (startParam && startParam !== userId && !hasBeenReferred) {
+        setStorage('hasBeenReferred', true);
+        setStorage('inviterId', startParam);
+    }
+
     setStorage('stars', stars);
     setStorage('inventory', inventory);
     setStorage('username', username);
     setStorage('userId', userId);
+    setStorage('refCount', refCount);
+    setStorage('refEarned', refEarned);
 
     document.getElementById('user-stars').innerText = stars;
     document.getElementById('profile-name-input').value = username;
     document.getElementById('profile-id-input').value = userId;
     document.getElementById('header-username').innerText = `🎁 ${username}`;
     
+    const refLink = `https://t.me/${BOT_USERNAME}/app?startapp=${userId}`;
+    document.getElementById('ref-link-input').value = refLink;
+    document.getElementById('ref-count').innerText = refCount;
+    document.getElementById('ref-earned').innerText = `${refEarned} ⭐`;
+
     if (hasNewItems) {
         document.getElementById('inventory-badge').classList.add('active');
     }
@@ -821,12 +887,12 @@
 
     function getPaidRandomItem() {
         const rand = Math.random() * 100;
-        if (rand < 62) return items[0];
-        if (rand < 76) return items[1];
-        if (rand < 88) return items[2];
+        if (rand < 66) return items[0];
+        if (rand < 78) return items[1];
+        if (rand < 89) return items[2];
         if (rand < 94) return items[3];
-        if (rand < 97) return items[4];
-        if (rand < 99) return items[5];
+        if (rand < 96.5) return items[4];
+        if (rand < 98.5) return items[5];
         return items[6];
     }
 
@@ -888,6 +954,15 @@
             }
             lastFreeSpin = now;
             setStorage('lastFreeSpin', lastFreeSpin);
+        }
+
+        if (!hasSpinned) {
+            hasSpinned = true;
+            setStorage('hasSpinned', true);
+            const inviter = getStorage('inviterId', null);
+            if (inviter) {
+                console.log(`Реферал засчитан пользователю с ID: ${inviter}`);
+            }
         }
 
         isSpinning = true;
@@ -965,7 +1040,14 @@
             descEl.innerText = `Вы выиграли: ${item.name}!`;
             btnEl.innerText = 'Забрать в инвентарь';
             btnEl.onclick = () => {
-                inventory.push(item);
+                const uniqueId = Date.now() + Math.random();
+                const cdDuration = 5 * 60 * 1000; // Автоматический таймер 5 минут при получении
+                const endTime = Date.now() + cdDuration;
+                
+                // Сразу сохраняем время окончания КД для этого предмета
+                localStorage.setItem(`item_cd_${uniqueId}`, endTime);
+
+                inventory.push({ ...item, uniqueId: uniqueId });
                 setStorage('inventory', inventory);
                 
                 hasNewItems = true;
@@ -1002,6 +1084,8 @@
         }
     }
 
+    let withdrawTimers = {};
+
     function renderInventory() {
         const grid = document.getElementById('inventory-grid');
         if (inventory.length === 0) {
@@ -1013,14 +1097,66 @@
             const price = getItemPrice(item);
             const div = document.createElement('div');
             div.className = 'inventory-item';
+            
+            const uniqueKey = item.uniqueId || `${item.id}_${index}`;
+            const cdKey = `item_cd_${uniqueKey}`;
+            let savedCd = localStorage.getItem(cdKey);
+            const now = Date.now();
+            
+            // Если предмет старый и у него не было записано КД, создаем его автоматически при открытии инвентаря
+            if (!savedCd) {
+                const cdDuration = 5 * 60 * 1000;
+                savedCd = Date.now() + cdDuration;
+                localStorage.setItem(cdKey, savedCd);
+            }
+
+            let actionButtonHtml = '';
+            if (now < parseInt(savedCd)) {
+                const remainingSec = Math.ceil((parseInt(savedCd) - now) / 1000);
+                const mins = Math.floor(remainingSec / 60).toString().padStart(2, '0');
+                const secs = (remainingSec % 60).toString().padStart(2, '0');
+                actionButtonHtml = `<button class="withdraw-btn" id="wd-btn-${index}" disabled>⏳ ${mins}:${secs}</button>`;
+                startWithdrawTimer(index, uniqueKey, parseInt(savedCd));
+            } else {
+                actionButtonHtml = `<button class="withdraw-btn" id="wd-btn-${index}" onclick="withdrawGift(${index})">Вывести ↗</button>`;
+            }
+
             div.innerHTML = `
                 ${item.icon}
                 <span class="item-name">${item.name}</span>
-                <button class="withdraw-btn" onclick="withdrawGift(${index})">Вывести ↗</button>
+                ${actionButtonHtml}
                 <button class="sell-btn" onclick="sellGift(${index})">Продать (+${price}⭐)</button>
             `;
             grid.appendChild(div);
         });
+    }
+
+    function startWithdrawTimer(index, timerId, endTime) {
+        if (withdrawTimers[timerId]) clearInterval(withdrawTimers[timerId]);
+
+        withdrawTimers[timerId] = setInterval(() => {
+            const now = Date.now();
+            const remainingSec = Math.ceil((endTime - now) / 1000);
+            const btn = document.getElementById(`wd-btn-${index}`);
+
+            if (!btn) {
+                clearInterval(withdrawTimers[timerId]);
+                return;
+            }
+
+            if (remainingSec <= 0) {
+                clearInterval(withdrawTimers[timerId]);
+                localStorage.removeItem(`item_cd_${timerId}`);
+                btn.disabled = false;
+                btn.className = "withdraw-btn";
+                btn.innerText = "Вывести ↗";
+                btn.onclick = () => withdrawGift(index);
+            } else {
+                const mins = Math.floor(remainingSec / 60).toString().padStart(2, '0');
+                const secs = (remainingSec % 60).toString().padStart(2, '0');
+                btn.innerText = `⏳ ${mins}:${secs}`;
+            }
+        }, 1000);
     }
 
     function withdrawGift(index) {
@@ -1046,6 +1182,18 @@
             setStorage('inventory', inventory);
             renderInventory();
         });
+    }
+
+    function shareRefLink() {
+        const link = document.getElementById('ref-link-input').value;
+        const text = "🎁 Открывай кейсы и выигрывай подарки в Telegram!";
+        if (tg?.openTelegramLink) {
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
+        } else {
+            navigator.clipboard.writeText(link).then(() => {
+                showCustomConfirm('Ссылка скопирована', 'Реферальная ссылка скопирована в буфер обмена! Отправьте её друзьям.', null);
+            });
+        }
     }
 
     function showCustomConfirm(title, desc, onConfirm) {
@@ -1092,7 +1240,7 @@
         input.select();
         input.setSelectionRange(0, 99999);
         navigator.clipboard.writeText(input.value).then(() => {
-            showCustomConfirm('Скопировано!', `Значение "${input.value}" скопировано.`, null);
+            showCustomConfirm('Скопировано!', `Значение скопировано в буфер обмена.`, null);
         });
     }
 
