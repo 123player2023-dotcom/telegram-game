@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Telegram Gift Case Game (PvP Dual Roulettes)</title>
+    <title>Telegram Gift Case Game</title>
     <script src="https://telegram-duel-server-t0w9.onrender.com/socket.io/socket.io.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
@@ -29,7 +29,6 @@
         .switch-tab.active { background: #8b5cf6; color: #ffffff; border-color: #a78bfa; }
         .case-card { background: #202024; border: 1px solid #27272a; border-radius: 16px; padding: 16px; text-align: center; max-width: 400px; width: 100%; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
         
-        /* Стили рулеток */
         .roulette-container { position: relative; width: 100%; height: 90px; background: #111113; border: 2px solid #3f3f46; border-radius: 12px; overflow: hidden; margin: 8px 0; }
         .roulette-pointer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 3px; height: 100%; background: #ef4444; z-index: 10; box-shadow: 0 0 10px #ef4444; }
         .roulette-track { display: flex; position: absolute; left: 0; top: 0; height: 100%; will-change: transform; }
@@ -68,15 +67,13 @@
 
             <div class="case-card">
                 <h2 style="font-size: 17px; margin-bottom: 4px;" id="case-title">Подарочный кейс</h2>
-                <p style="font-size: 11px; color: #a1a1aa; margin-bottom: 8px;" id="case-desc">Испытай удачу и выиграй эксклюзивный подарок!</p>
+                <p style="font-size: 11px; color: #a1a1aa; margin-bottom: 8px;" id="case-desc">Испытай удачу и выиграй подарок!</p>
                 
-                <!-- Обычная рулетка (для одиночных кейсов) -->
                 <div class="roulette-container" id="single-roulette-box">
                     <div class="roulette-pointer"></div>
                     <div class="roulette-track" id="roulette-track"></div>
                 </div>
 
-                <!-- Блок дуэли: две раздельные рулетки (Ваша и Соперника) -->
                 <div id="duel-arena-box" style="display: none;">
                     <div style="font-size: 12px; color: #a78bfa; text-align: left; margin-bottom: 2px;">🟢 Ваша рулетка:</div>
                     <div class="roulette-container">
@@ -122,7 +119,7 @@
     <div class="modal-overlay" id="result-modal">
         <div class="modal-card">
             <div style="font-size:48px;" id="modal-icon">🎁</div>
-            <div style="font-size:17px; font-weight:600; margin-top:6px;" id="modal-title">Поздравляем!</div>
+            <div style="font-size:17px; font-weight:600; margin-top:6px;" id="modal-title">Результат</div>
             <div style="font-size:12px; color:#a1a1aa; margin:10px 0;" id="modal-desc">Вы выиграли подарок!</div>
             <button class="btn" onclick="closeModal()">Забрать</button>
         </div>
@@ -140,13 +137,17 @@
     let currentMode = 'paid';
     let isSpinning = false;
 
+    // Актуальный список подарков со всеми расценками и «ничего»
     const giftsData = [
-        { name: "Духи", icon: "💐", price: 10 },
-        { name: "Сердце", icon: "💖", price: 25 },
-        { name: "Торт", icon: "🎂", price: 50 },
-        { name: "Кольцо", icon: "💍", price: 100 },
-        { name: "Бриллиант", icon: "💎", price: 250 },
-        { name: "Корона", icon: "👑", price: 500 }
+        { name: "Ничего", icon: "❌", price: 0 },
+        { name: "Сердце", icon: "💖", price: 15 },
+        { name: "Мишка", icon: "🧸", price: 15 },
+        { name: "Подарочек", icon: "🎁", price: 25 },
+        { name: "Букет", icon: "💐", price: 25 },
+        { name: "Шампанское", icon: "🍾", price: 50 },
+        { name: "Ракета", icon: "🚀", price: 50 },
+        { name: "Бриллиант", icon: "💎", price: 100 },
+        { name: "Кольцо", icon: "💍", price: 100 }
     ];
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -225,12 +226,10 @@
         executeSingleSpin(giftsData[Math.floor(Math.random() * giftsData.length)]);
     }
 
-    // Обработчик старта дуэли от сервера с двумя рулетками
     socket.on('duel_started', (data) => {
-        document.getElementById('duel-status-text').innerText = `Соперник найден: ${data.opponentName}! Вращение...`;
+        document.getElementById('duel-status-text').innerText = `Соперник: ${data.opponentName}! Вращение...`;
         document.getElementById('opponent-label-box').innerText = `🔴 Рулетка соперника (${data.opponentName}):`;
 
-        // Заполняем треки с фиксированными победными подарками на позиции 25
         buildTrack('my-roulette-track', data.myGift);
         buildTrack('opponent-roulette-track', data.opponentGift);
 
@@ -239,7 +238,6 @@
             const targetIndex = 25;
             const distance = -(targetIndex * itemWidth) + 140;
 
-            // Запускаем обе рулетки одновременно
             const myTrack = document.getElementById('my-roulette-track');
             const oppTrack = document.getElementById('opponent-roulette-track');
 
@@ -256,11 +254,13 @@
             document.getElementById('duel-status-text').style.display = 'none';
 
             if (data.isWinner) {
-                inventory.push(data.myGift);
-                saveInventory();
-                showModal(data.myGift.icon, 'Победа в Дуэли! 🎉', `Вы переиграли соперника и забрали ${data.myGift.name} (${data.myGift.price}⭐)!`);
+                if (data.myGift.price > 0) {
+                    inventory.push(data.myGift);
+                    saveInventory();
+                }
+                showModal(data.myGift.icon, 'Победа в Дуэли! 🎉', `Ваш подарок (${data.myGift.name} — ${data.myGift.price}⭐) дороже подарка соперника (${data.opponentGift.name} — ${data.opponentGift.price}⭐)!`);
             } else {
-                showModal('💀', 'Поражение!', `Соперник (${data.opponentName}) оказался удачливее и выиграл раунд.`);
+                showModal('💀', 'Поражение!', `Подарок соперника (${data.opponentGift.name} — ${data.opponentGift.price}⭐) оказался дороже вашего.`);
             }
         }, 4300);
     });
@@ -282,9 +282,11 @@
         setTimeout(() => {
             isSpinning = false;
             document.getElementById('spin-btn').disabled = false;
-            inventory.push(winningGift);
-            saveInventory();
-            showModal(winningGift.icon, 'Поздравляем!', `Вы выиграли ${winningGift.name} (${winningGift.price}⭐)!`);
+            if (winningGift.price > 0) {
+                inventory.push(winningGift);
+                saveInventory();
+            }
+            showModal(winningGift.icon, winningGift.price > 0 ? 'Поздравляем!' : 'Увы!', `Вам выпало: ${winningGift.name} (${winningGift.price}⭐)!`);
         }, 4200);
     }
 
