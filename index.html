@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Telegram Gift Case Game (Local Test)</title>
+    <title>Telegram Gift Case Game (Online Duel)</title>
+    <!-- Подключаем Socket.io клиент с вашего сервера на Render -->
+    <script src="https://telegram-duel-server-t0w9.onrender.com/socket.io/socket.io.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -275,11 +277,6 @@
             margin-top: 6px;
             width: 100%;
         }
-        .withdraw-btn:disabled {
-            background: #3f3f46;
-            color: #a1a1aa;
-            cursor: not-allowed;
-        }
         .sell-btn {
             background: #f59e0b;
             color: #18181b;
@@ -404,7 +401,6 @@
             text-align: center;
         }
         
-        /* Стили для овальных тумблеров (переключателей) */
         .setting-row {
             display: flex;
             justify-content: space-between;
@@ -419,7 +415,7 @@
         .toggle-switch {
             width: 50px;
             height: 26px;
-            background-color: #52525b; /* Серый по умолчанию (выкл) */
+            background-color: #52525b;
             border-radius: 13px;
             position: relative;
             cursor: pointer;
@@ -429,7 +425,7 @@
             padding: 2px;
         }
         .toggle-switch.active {
-            background-color: #22c55e; /* Зеленый при включении */
+            background-color: #22c55e;
         }
         .toggle-ball {
             width: 22px;
@@ -442,7 +438,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         .toggle-switch.active .toggle-ball {
-            transform: translateX(24px); /* Перемещение шарика вправо */
+            transform: translateX(24px);
         }
 
         .deposit-options {
@@ -471,14 +467,6 @@
             margin: 10px 0;
             display: none;
             text-align: center;
-        }
-        .deposit-link-clickable {
-            color: #a78bfa;
-            font-weight: 700;
-            text-decoration: underline;
-            cursor: pointer;
-            display: inline-block;
-            margin-top: 6px;
         }
         .modal-overlay {
             position: absolute;
@@ -576,7 +564,7 @@
 <div class="app-container">
     <!-- Header -->
     <div class="header">
-        <div class="header-title" id="header-username">🎁 Игрок (Тест)</div>
+        <div class="header-title" id="header-username">🎁 Игрок (Онлайн)</div>
         <div class="balance-container">
             <div class="balance-box">
                 ⭐ <span id="user-stars">50</span>
@@ -591,6 +579,7 @@
         <div class="screen active" id="screen-main">
             <div class="roulette-switcher">
                 <button class="switch-tab active" id="tab-paid" onclick="switchRouletteMode('paid')">🎁 Кейс (25 ⭐)</button>
+                <button class="switch-tab" id="tab-duel" onclick="switchRouletteMode('duel')">⚔️ Дуэль (25 ⭐)</button>
                 <button class="switch-tab" id="tab-free" onclick="switchRouletteMode('free')">⭐ FREE Кейс</button>
             </div>
 
@@ -598,10 +587,12 @@
                 <h2 style="font-size: 17px; margin-bottom: 4px;" id="case-title">Подарочный кейс</h2>
                 <p style="font-size: 11px; color: #a1a1aa; margin-bottom: 8px;" id="case-desc">Испытай удачу и выиграй эксклюзивный подарок!</p>
                 
-                <div class="roulette-container">
+                <div class="roulette-container" id="roulette-box-wrap">
                     <div class="roulette-pointer"></div>
                     <div class="roulette-track" id="roulette-track"></div>
                 </div>
+
+                <div id="duel-status-text" style="font-size: 13px; color: #a78bfa; margin: 10px 0; display: none;">Поиск противника (10с)...</div>
 
                 <button class="btn" id="spin-btn" onclick="startSpin()">Крутить (25 ⭐)</button>
             </div>
@@ -619,7 +610,7 @@
         <div class="screen" id="screen-referral">
             <div class="profile-card">
                 <h2 style="font-size: 17px; margin-bottom: 4px;">👥 Пригласи друзей</h2>
-                <p style="font-size: 12px; color: #a1a1aa; margin-bottom: 8px;">Получай +10 ⭐ за каждого друга, который сделает прокрут!</p>
+                <p style="font-size: 12px; color: #a1a1aa; margin-bottom: 8px;">Получай +10 ⭐ за каждого друга!</p>
 
                 <div class="ref-stat-box">
                     <div class="ref-stat-item">
@@ -650,7 +641,7 @@
                 <h2 style="font-size: 17px; margin-bottom: 4px;">👤 Профиль игрока</h2>
                 
                 <div class="input-group">
-                    <label>Telegram ID (Локальный)</label>
+                    <label>Telegram ID</label>
                     <div class="input-row">
                         <input type="text" id="profile-id-input" readonly>
                         <button class="copy-btn" onclick="copyToClipboard('profile-id-input')">📋</button>
@@ -667,7 +658,6 @@
 
                 <button class="btn" onclick="saveProfile()">Сохранить имя</button>
 
-                <!-- Блок настроек аудио с тумблерами -->
                 <div class="setting-row">
                     <span>🎵 Фоновая музыка</span>
                     <div class="toggle-switch active" id="toggle-music" onclick="toggleMusicSwitch()">
@@ -683,7 +673,6 @@
                 </div>
                 
                 <div onclick="openExternalUrl('https://t.me/frickhaus')" class="link-btn">💬 Написать в техподдержку</div>
-                
                 <div onclick="requestAdminAuth()" class="admin-btn">⚙️ Панель Администратора</div>
             </div>
         </div>
@@ -724,27 +713,12 @@
             <div class="modal-close-cross" onclick="closeDepositModal()">✖</div>
             <div class="modal-title">Пополнение баланса</div>
             <div class="modal-desc">Выберите удобный способ:</div>
-
-            <div class="deposit-options" id="deposit-options-list">
+            <div class="deposit-options">
                 <button class="deposit-option-btn" onclick="selectDeposit('sbp')">💳 Оплата через СБП</button>
                 <button class="deposit-option-btn" onclick="selectDeposit('stars')">⭐ Звездочки TG</button>
             </div>
-
             <div class="deposit-info-box" id="deposit-info-box"></div>
-
             <button class="close-btn" onclick="closeDepositModal()">Закрыть</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="confirm-modal">
-        <div class="modal-card">
-            <div class="modal-close-cross" onclick="closeConfirmModal()">✖</div>
-            <div class="modal-title" id="confirm-title">Подтверждение</div>
-            <div class="modal-desc" id="confirm-desc">Вы уверены?</div>
-            <div class="modal-buttons" id="confirm-buttons-container">
-                <button class="close-btn" onclick="closeConfirmModal()">Отмена</button>
-                <button class="btn" id="confirm-action-btn">Да</button>
-            </div>
         </div>
     </div>
 
@@ -753,11 +727,9 @@
             <div class="modal-close-cross" onclick="closeAdminAuthModal()">✖</div>
             <div class="modal-title" style="color: #ef4444;">🔒 Доступ ограничен</div>
             <div class="modal-desc">Введите пароль администратора:</div>
-
             <div class="input-group" style="margin-bottom: 12px;">
                 <input type="password" id="admin-pass-input" placeholder="Пароль..." style="text-align: center;">
             </div>
-
             <button class="btn" onclick="verifyAdminPass()" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">Войти</button>
             <button class="close-btn" onclick="closeAdminAuthModal()" style="margin-top: 8px;">Отмена</button>
         </div>
@@ -768,17 +740,14 @@
             <div class="modal-close-cross" onclick="closeAdminModal()">✖</div>
             <div class="modal-title" style="color: #ef4444;">⚙️ Админ Панель</div>
             <div class="modal-desc">Выдача Звездочек (⭐)</div>
-
             <div class="input-group" style="margin-bottom: 8px;">
                 <label>Telegram ID пользователя</label>
-                <input type="text" id="admin-target-id" placeholder="Например: 849201948">
+                <input type="text" id="admin-target-id" placeholder="ID...">
             </div>
-
             <div class="input-group" style="margin-bottom: 12px;">
                 <label>Количество звездочек</label>
-                <input type="number" id="admin-stars-amount" placeholder="Например: 100">
+                <input type="number" id="admin-stars-amount" placeholder="100">
             </div>
-
             <button class="btn" onclick="adminGrantStars()" style="background: linear-gradient(135deg, #ef4444, #f59e0b); margin-bottom: 8px;">Выдать звездочки</button>
             <button class="close-btn" onclick="adminSelfAddStars()" style="border-color: #8b5cf6; color: #a78bfa;">+1000 ⭐ Себе</button>
             <button class="close-btn" onclick="closeAdminModal()" style="margin-top: 8px;">Закрыть</button>
@@ -787,837 +756,317 @@
 </div>
 
 <script>
-    // --- МУЗЫКАЛЬНЫЙ И АУДИО ДВИЖОК С ПЕРЕКЛЮЧАТЕЛЯМИ ---
-    let audioCtx = null;
-    let bgMusicGain = null;
-    let isMusicPlaying = false;
+    // Подключение к WebSocket серверу на Render
+    const socket = io('https://telegram-duel-server-t0w9.onrender.com');
 
-    // Состояния тумблеров (сохраняются в localStorage)
-    let musicEnabled = JSON.parse(localStorage.getItem('music_enabled') ?? 'true');
-    let sfxEnabled = JSON.parse(localStorage.getItem('sfx_enabled') ?? 'true');
-
-    // Инициализация состояния UI тумблеров при загрузке
-    window.addEventListener('DOMContentLoaded', () => {
-        const musicToggle = document.getElementById('toggle-music');
-        const sfxToggle = document.getElementById('toggle-sfx');
-
-        if (!musicEnabled) musicToggle.classList.remove('active');
-        if (!sfxEnabled) sfxToggle.classList.remove('active');
-    });
-
-    function toggleMusicSwitch() {
-        musicEnabled = !musicEnabled;
-        localStorage.setItem('music_enabled', musicEnabled);
-        const toggleEl = document.getElementById('toggle-music');
-        
-        if (musicEnabled) {
-            toggleEl.classList.add('active');
-            if (bgMusicGain && audioCtx) {
-                bgMusicGain.gain.setTargetAtTime(0.45, audioCtx.currentTime, 0.1);
-            } else {
-                initAudio();
-            }
-        } else {
-            toggleEl.classList.remove('active');
-            if (bgMusicGain && audioCtx) {
-                bgMusicGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
-            }
-        }
-        playClickSound();
-    }
-
-    function toggleSfxSwitch() {
-        sfxEnabled = !sfxEnabled;
-        localStorage.setItem('sfx_enabled', sfxEnabled);
-        const toggleEl = document.getElementById('toggle-sfx');
-        
-        if (sfxEnabled) {
-            toggleEl.classList.add('active');
-        } else {
-            toggleEl.classList.remove('active');
-        }
-        playClickSound();
-    }
-
-    function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
-        if (!isMusicPlaying) {
-            startDesolateSlowedMusic();
-            isMusicPlaying = true;
-        }
-    }
-
-    // Музыка в стиле Desolate Slowed & Reverb
-    function startDesolateSlowedMusic() {
-        try {
-            bgMusicGain = audioCtx.createGain();
-            const targetVol = musicEnabled ? 0.45 : 0;
-            bgMusicGain.gain.setValueAtTime(targetVol, audioCtx.currentTime);
-            bgMusicGain.connect(audioCtx.destination);
-
-            const desolateChords = [110, 130.81, 146.83, 98.00];
-            let chordIndex = 0;
-
-            function playAtmosphereLoop() {
-                if (!audioCtx) return;
-                const baseFreq = desolateChords[chordIndex];
-
-                const osc = audioCtx.createOscillator();
-                const filter = audioCtx.createBiquadFilter();
-                const noteGain = audioCtx.createGain();
-
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
-
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(350, audioCtx.currentTime);
-
-                noteGain.gain.setValueAtTime(0.001, audioCtx.currentTime);
-                noteGain.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 1.5);
-                noteGain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 5.0);
-
-                osc.connect(filter);
-                filter.connect(noteGain);
-                noteGain.connect(bgMusicGain);
-
-                osc.start(audioCtx.currentTime);
-                osc.stop(audioCtx.currentTime + 5.0);
-
-                const highOsc = audioCtx.createOscillator();
-                const highGain = audioCtx.createGain();
-                highOsc.type = 'sine';
-                highOsc.frequency.setValueAtTime(baseFreq * 2.5, audioCtx.currentTime);
-
-                highGain.gain.setValueAtTime(0.001, audioCtx.currentTime);
-                highGain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 2.0);
-                highGain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 4.5);
-
-                highOsc.connect(highGain);
-                highGain.connect(bgMusicGain);
-
-                highOsc.start(audioCtx.currentTime);
-                highOsc.stop(audioCtx.currentTime + 4.5);
-
-                chordIndex = (chordIndex + 1) % desolateChords.length;
-                setTimeout(playAtmosphereLoop, 4500);
-            }
-
-            playAtmosphereLoop();
-        } catch(e) {}
-    }
-
-    // Приглушение при прокрутке
-    function duckMusic(duck) {
-        if (!bgMusicGain || !audioCtx || !musicEnabled) return;
-        const targetVolume = duck ? 0.045 : 0.45;
-        bgMusicGain.gain.setTargetAtTime(targetVolume, audioCtx.currentTime, 0.2);
-    }
-
-    // Звук клика (проверяет sfxEnabled)
-    function playClickSound() {
-        try {
-            initAudio();
-            if (!sfxEnabled || !audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(450, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.04);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.04);
-        } catch(e) {}
-    }
-
-    // Тактильный щелчок рулетки (проверяет sfxEnabled)
-    function playTickSound() {
-        try {
-            initAudio();
-            if (!sfxEnabled || !audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.015);
-            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.015);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.015);
-        } catch(e) {}
-    }
-
-    // Звук победы (проверяет sfxEnabled)
-    function playWinSound() {
-        try {
-            initAudio();
-            if (!sfxEnabled || !audioCtx) return;
-            const now = audioCtx.currentTime;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(523.25, now);
-            osc.frequency.setValueAtTime(659.25, now + 0.1);
-            osc.frequency.setValueAtTime(783.99, now + 0.2);
-            osc.frequency.setValueAtTime(1046.50, now + 0.3);
-            gain.gain.setValueAtTime(0.15, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(now);
-            osc.stop(now + 0.6);
-        } catch(e) {}
-    }
-
-
-    // Эмуляция Telegram WebApp для локального теста
-    const tg = window.Telegram?.WebApp || {
-        initDataUnsafe: {
-            user: { id: 777888999, first_name: "Тестовый Игрок" }
-        },
-        openTelegramLink: (url) => window.open(url, '_blank')
-    };
-
-    const WITHDRAW_CHANNEL_URL = "https://t.me/givegiftfast";
-    const SUPPORT_URL = "https://t.me/frickhaus";
-    const BOT_USERNAME = "givegift_fast_bot";
-    
-    const ADMIN_PASSWORD = "VLAD245FRICK929HAUS868BEZBELETNIK34";
-    const ADMIN_SECRET_CODE = "VLAD245FRICK929HAUS868BEZBELETNIK34";
-
-    const PRICE_MAP = {
-        'bear': 15,
-        'heart': 15,
-        'gift': 25,
-        'champagne': 50,
-        'rocket': 50,
-        'ring': 100,
-        'rose': 25
-    };
-
-    function getItemPrice(item) {
-        if (!item) return 0;
-        if (item.sellPrice && !isNaN(item.sellPrice)) return item.sellPrice;
-        return PRICE_MAP[item.id] || 0;
-    }
-
-    const sessionKey = 'local_test_user_' + (tg.initDataUnsafe?.user?.id || 'default');
-
-    function getStorage(key, defaultVal) {
-        const val = localStorage.getItem(`${sessionKey}_${key}`);
-        if (val === null || val === undefined) return defaultVal;
-        try {
-            const parsed = JSON.parse(val);
-            return (parsed !== null && !isNaN(parsed)) ? parsed : defaultVal;
-        } catch(e) {
-            return defaultVal;
-        }
-    }
-
-    function setStorage(key, val) {
-        localStorage.setItem(`${sessionKey}_${key}`, JSON.stringify(val));
-    }
-
-    let stars = parseInt(getStorage('stars', 50));
-    if (isNaN(stars)) stars = 50;
-
-    let inventory = getStorage('inventory', []);
-    
-    let defaultUsername = tg.initDataUnsafe?.user?.first_name || 'Тестовый Игрок';
-    let defaultUserId = tg.initDataUnsafe?.user?.id?.toString() || '777888999';
-
-    let username = getStorage('username', defaultUsername);
-    let userId = getStorage('userId', defaultUserId);
-    let hasNewItems = getStorage('hasNewItems', false);
-    let lastFreeSpin = parseInt(getStorage('lastFreeSpin', 0));
-
-    let refCount = parseInt(getStorage('refCount', 0));
-    let refEarned = parseInt(getStorage('refEarned', 0));
-    let hasSpinned = getStorage('hasSpinned', false);
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const startParam = urlParams.get('startapp') || urlParams.get('ref');
-    let hasBeenReferred = getStorage('hasBeenReferred', false);
-
-    if (startParam && startParam !== userId && !hasBeenReferred) {
-        setStorage('hasBeenReferred', true);
-        setStorage('inviterId', startParam);
-    }
-
-    setStorage('stars', stars);
-    setStorage('inventory', inventory);
-    setStorage('username', username);
-    setStorage('userId', userId);
-    setStorage('refCount', refCount);
-    setStorage('refEarned', refEarned);
-
-    document.getElementById('user-stars').innerText = stars;
-    document.getElementById('profile-name-input').value = username;
-    document.getElementById('profile-id-input').value = userId;
-    document.getElementById('header-username').innerText = `🎁 ${username}`;
-    
-    const refLink = `https://t.me/${BOT_USERNAME}/app?startapp=${userId}`;
-    document.getElementById('ref-link-input').value = refLink;
-    document.getElementById('ref-count').innerText = refCount;
-    document.getElementById('ref-earned').innerText = `${refEarned} ⭐`;
-
-    if (hasNewItems) {
-        document.getElementById('inventory-badge').classList.add('active');
-    }
-
-    const items = [
-        { id: 'nothing', name: 'Ничего', icon: '❄️', type: 'nothing', sellPrice: 0 },
-        { id: 'bear', name: 'Мишка', icon: '🧸', type: 'item', sellPrice: 15 },
-        { id: 'heart', name: 'Сердечко', icon: '💖', type: 'item', sellPrice: 15 },
-        { id: 'gift', name: 'Подарочек', icon: '🎁', type: 'item', sellPrice: 25 },
-        { id: 'champagne', name: 'Шампанское', icon: '🍾', type: 'item', sellPrice: 50 },
-        { id: 'rocket', name: 'Ракета', icon: '🚀', type: 'item', sellPrice: 50 },
-        { id: 'ring', name: 'Кольцо', icon: '💍', type: 'item', sellPrice: 100 },
-        { id: 'rose', name: 'Роза', icon: '🌹', type: 'item', sellPrice: 25 }
-    ];
-
-    let currentMode = 'paid';
-
-    function switchRouletteMode(mode) {
-        playClickSound();
-        if (isSpinning) return;
-        currentMode = mode;
-        
-        document.getElementById('tab-paid').classList.remove('active');
-        document.getElementById('tab-free').classList.remove('active');
-        
-        const spinBtn = document.getElementById('spin-btn');
-        const caseTitle = document.getElementById('case-title');
-        const caseDesc = document.getElementById('case-desc');
-
-        if (mode === 'paid') {
-            document.getElementById('tab-paid').classList.add('active');
-            caseTitle.innerText = 'Подарочный кейс';
-            caseDesc.innerText = 'Испытай удачу и выиграй эксклюзивный подарок!';
-            spinBtn.innerText = 'Крутить (25 ⭐)';
-            spinBtn.disabled = (stars < 25);
-        } else {
-            document.getElementById('tab-free').classList.add('active');
-            caseTitle.innerText = 'Бесплатный кейс (FREE)';
-            caseDesc.innerText = 'Доступно 1 раз в 24 часа!';
-            checkFreeSpinTimer();
-        }
-
-        buildNewTrack();
-    }
-
-    function checkFreeSpinTimer() {
-        const now = Date.now();
-        const cooldown = 24 * 60 * 60 * 1000;
-        const spinBtn = document.getElementById('spin-btn');
-
-        if (currentMode === 'free') {
-            if (now - lastFreeSpin < cooldown) {
-                const remaining = cooldown - (now - lastFreeSpin);
-                const hours = Math.floor(remaining / (1000 * 60 * 60));
-                const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-                spinBtn.innerText = `Доступно через ${hours}ч ${minutes}м`;
-                spinBtn.disabled = true;
-            } else {
-                spinBtn.innerText = 'Крутить Бесплатно (FREE)';
-                spinBtn.disabled = false;
-            }
-        }
-    }
-
-    function getPaidRandomItem() {
-        const rand = Math.random() * 100;
-        if (rand < 66) return items[0];
-        if (rand < 78) return items[1];
-        if (rand < 89) return items[2];
-        if (rand < 94) return items[3];
-        if (rand < 96.5) return items[4];
-        if (rand < 98.5) return items[5];
-        return items[6];
-    }
-
-    function getFreeRandomItem() {
-        const rand = Math.random() * 100;
-        if (rand < 75) return items[0];
-        if (rand < 81.25) return items[1];
-        if (rand < 87.5) return items[2];
-        if (rand < 93.75) return items[3];
-        return items[7];
-    }
-
-    function getRandomItem() {
-        return currentMode === 'paid' ? getPaidRandomItem() : getFreeRandomItem();
-    }
-
-    const track = document.getElementById('roulette-track');
-    let trackItems = [];
-
-    function buildNewTrack() {
-        trackItems = [];
-        for (let i = 0; i < 50; i++) {
-            trackItems.push(getRandomItem());
-        }
-        renderTrack(trackItems);
-    }
-
-    function renderTrack(itemsList) {
-        track.innerHTML = '';
-        itemsList.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'roulette-item';
-            div.innerHTML = `${item.icon}<span class="label">${item.name}</span>`;
-            track.appendChild(div);
-        });
-    }
-    
-    buildNewTrack();
-
+    let userId = localStorage.getItem('tg_user_id') || 'user_' + Math.floor(Math.random() * 1000000);
+    localStorage.setItem('tg_user_id', userId);
+    let username = localStorage.getItem('tg_username') || 'Игрок_' + userId.slice(-4);
+    let userStars = parseInt(localStorage.getItem('tg_stars') || '50');
+    let inventory = JSON.parse(localStorage.getItem('tg_inventory') || '[]');
+    let currentMode = 'paid'; // 'paid', 'duel', 'free'
     let isSpinning = false;
 
-    function startSpin() {
+    const giftsData = [
+        { name: "Духи", icon: "💐", price: 10 },
+        { name: "Сердце", icon: "💖", price: 25 },
+        { name: "Торт", icon: "🎂", price: 50 },
+        { name: "Звезда", icon: "⭐", price: 100 },
+        { name: "Бриллиант", icon: "💎", price: 250 },
+        { name: "Корона", icon: "👑", price: 500 }
+    ];
+
+    window.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('user-stars').innerText = userStars;
+        document.getElementById('profile-id-input').value = userId;
+        document.getElementById('profile-name-input').value = username;
+        document.getElementById('header-username').innerText = '🎁 ' + username;
+        document.getElementById('ref-link-input').value = 'https://t.me/giftcasebot?start=' + userId;
+        
+        buildRouletteTrack();
+        renderInventory();
+    });
+
+    function switchRouletteMode(mode) {
+        if (isSpinning) return;
+        currentMode = mode;
         playClickSound();
+
+        document.querySelectorAll('.switch-tab').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + mode).classList.add('active');
+
+        const spinBtn = document.getElementById('spin-btn');
+        const duelStatus = document.getElementById('duel-status-text');
+
+        if (mode === 'paid') {
+            document.getElementById('case-title').innerText = 'Подарочный кейс';
+            document.getElementById('case-desc').innerText = 'Испытай удачу и выиграй эксклюзивный подарок!';
+            spinBtn.innerText = 'Крутить (25 ⭐)';
+            spinBtn.style.display = 'block';
+            duelStatus.style.display = 'none';
+        } else if (mode === 'duel') {
+            document.getElementById('case-title').innerText = 'PvP Дуэль (25 ⭐)';
+            document.getElementById('case-desc').innerText = 'Сразись с реальным игроком или ботом за ценный приз!';
+            spinBtn.innerText = 'Найти дуэль (25 ⭐)';
+            spinBtn.style.display = 'block';
+            duelStatus.style.display = 'none';
+        } else if (mode === 'free') {
+            document.getElementById('case-title').innerText = 'FREE Кейс';
+            document.getElementById('case-desc').innerText = 'Бесплатный прокрут раз в сутки!';
+            spinBtn.innerText = 'Крутить Бесплатно';
+            spinBtn.style.display = 'block';
+            duelStatus.style.display = 'none';
+        }
+    }
+
+    function buildRouletteTrack() {
+        const track = document.getElementById('roulette-track');
+        track.innerHTML = '';
+        let html = '';
+        for (let i = 0; i < 40; i++) {
+            const gift = giftsData[Math.floor(Math.random() * giftsData.length)];
+            html += `<div class="roulette-item" data-name="${gift.name}" data-icon="${gift.icon}">${gift.icon}<span class="label">${gift.price}⭐</span></div>`;
+        }
+        track.innerHTML = html;
+    }
+
+    function startSpin() {
         if (isSpinning) return;
         
-        if (currentMode === 'paid') {
-            if (stars < 25) {
-                showNoStarsModal();
+        if (currentMode === 'paid' || currentMode === 'duel') {
+            if (userStars < 25) {
+                alert('Недостаточно звездочек на балансе!');
                 return;
             }
-            stars -= 25;
-            setStorage('stars', stars);
-            document.getElementById('user-stars').innerText = stars;
-        } else {
-            const now = Date.now();
-            const cooldown = 24 * 60 * 60 * 1000;
-            if (now - lastFreeSpin < cooldown) {
-                showCustomConfirm('Ошибка', 'Бесплатный кейс будет доступен позже!', null);
-                return;
-            }
-            lastFreeSpin = now;
-            setStorage('lastFreeSpin', lastFreeSpin);
+            userStars -= 25;
+            updateBalance();
         }
 
-        if (!hasSpinned) {
-            hasSpinned = true;
-            setStorage('hasSpinned', true);
-            const inviter = getStorage('inviterId', null);
-            if (inviter) {
-                console.log(`Реферал засчитан пользователю с ID: ${inviter}`);
-            }
+        if (currentMode === 'duel') {
+            isSpinning = true;
+            document.getElementById('spin-btn').disabled = true;
+            document.getElementById('duel-status-text').style.display = 'block';
+            document.getElementById('duel-status-text').innerText = 'Поиск противника (10с)...';
+
+            // Отправляем запрос на сервер для поиска дуэли
+            socket.emit('find_duel', { userId, username, bet: 25 });
+            return;
         }
 
-        duckMusic(true);
+        executeLocalSpin();
+    }
 
+    // Слушаем ответ от сервера по дуэли
+    socket.on('duel_started', (data) => {
+        if (!isSpinning) return;
+        document.getElementById('duel-status-text').innerText = data.type === 'bot' ? 'Противник не найден, игра с ботом!' : 'Противник найден! Битва!';
+        
+        setTimeout(() => {
+            let win = false;
+            if (data.type === 'bot') {
+                // Бот выигрывает в 60% случаев, игрок в 40%
+                win = Math.random() > 0.60;
+            } else {
+                win = Math.random() >= 0.5;
+            }
+
+            if (win) {
+                const wonGift = giftsData[Math.floor(Math.random() * giftsData.length)];
+                finishSpinAnimation(wonGift, 'Победа в дуэли! Вы забрали приз!');
+            } else {
+                finishSpinAnimation(null, 'Поражение в дуэли. Повезет в следующий раз!');
+            }
+        }, 1500);
+    });
+
+    function executeLocalSpin() {
         isSpinning = true;
         document.getElementById('spin-btn').disabled = true;
+        buildRouletteTrack();
 
-        const winningItem = getRandomItem();
-        
-        trackItems = [];
-        for (let i = 0; i < 50; i++) {
-            if (i === 40) {
-                trackItems.push(winningItem);
-            } else {
-                trackItems.push(getRandomItem());
-            }
-        }
-        renderTrack(trackItems);
-
+        const track = document.getElementById('roulette-track');
         const itemWidth = 85;
-        const containerWidth = document.querySelector('.roulette-container').offsetWidth;
-        const targetOffset = (40 * itemWidth) - (containerWidth / 2) + (itemWidth / 2);
-        const finalOffset = targetOffset + (Math.random() * 50 - 25);
+        const targetIndex = 25;
+        const randomOffset = (Math.random() * 60) - 30;
+        const totalDistance = -(targetIndex * itemWidth) + 160 + randomOffset;
 
-        track.style.transition = 'none';
-        track.style.transform = 'translateX(0px)';
-        track.offsetHeight;
-
-        const spinDuration = 3500;
-        track.style.transition = `transform ${spinDuration}ms cubic-bezier(0.15, 0.85, 0.2, 1)`;
-        track.style.transform = `translateX(-${finalOffset}px)`;
-
-        let startTime = performance.now();
-        function tickAnimation(currentTime) {
-            let elapsed = currentTime - startTime;
-            let progress = elapsed / spinDuration;
-
-            if (progress < 1) {
-                playTickSound();
-                let currentInterval = 40 + (progress * progress * 350);
-                setTimeout(() => requestAnimationFrame(tickAnimation), currentInterval);
-            }
-        }
-        requestAnimationFrame(tickAnimation);
+        track.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.15, 1)';
+        track.style.transform = `translateX(${totalDistance}px)`;
 
         setTimeout(() => {
-            isSpinning = false;
-            playWinSound();
-            duckMusic(false);
-
-            if (currentMode === 'paid') {
-                document.getElementById('spin-btn').disabled = (stars < 25);
-                document.getElementById('spin-btn').innerText = 'Крутить (25 ⭐)';
-            } else {
-                checkFreeSpinTimer();
-            }
-            showResultModal(winningItem);
-        }, spinDuration + 50);
+            const wonGift = giftsData[Math.floor(Math.random() * giftsData.length)];
+            finishSpinAnimation(wonGift, `Вы выиграли ${wonGift.name}!`);
+        }, 4000);
     }
 
-    function showNoStarsModal() {
-        playClickSound();
-        const modal = document.getElementById('confirm-modal');
-        document.getElementById('confirm-title').innerText = 'Недостаточно звезд';
-        document.getElementById('confirm-desc').innerText = 'Для прокрута требуется 25 ⭐. Пополните ваш баланс!';
-        
-        const btnContainer = document.getElementById('confirm-buttons-container');
-        btnContainer.innerHTML = `
-            <button class="close-btn" onclick="closeConfirmModal()">Закрыть</button>
-            <button class="btn" onclick="closeConfirmModal(); openDepositModal();">Пополнить</button>
-        `;
+    function finishSpinAnimation(gift, descText) {
+        const track = document.getElementById('roulette-track');
+        track.style.transition = 'none';
+        track.style.transform = 'translateX(0px)';
+        isSpinning = false;
+        document.getElementById('spin-btn').disabled = false;
+        document.getElementById('duel-status-text').style.display = 'none';
 
-        modal.style.display = 'flex';
-    }
-
-    function showResultModal(item) {
-        const modal = document.getElementById('result-modal');
-        const iconEl = document.getElementById('modal-icon');
-        const titleEl = document.getElementById('modal-title');
-        const descEl = document.getElementById('modal-desc');
-        const btnEl = document.getElementById('modal-action-btn');
-
-        iconEl.innerText = item.icon;
-        
-        if (item.type === 'nothing') {
-            titleEl.innerText = 'Увы, ничего!';
-            descEl.innerText = 'К сожалению, этот кейс оказался пустым.';
-            btnEl.innerText = 'Крутить еще раз';
-            btnEl.onclick = () => {
-                playClickSound();
-                closeModal();
-                startSpin();
-            };
+        if (gift) {
+            inventory.push(gift);
+            saveInventory();
+            showModal(gift.icon, 'Поздравляем!', descText);
         } else {
-            titleEl.innerText = 'Поздравляем!';
-            descEl.innerText = `Вы выиграли: ${item.name}!`;
-            btnEl.innerText = 'Забрать в инвентарь';
-            btnEl.onclick = () => {
-                playClickSound();
-                const uniqueId = Date.now() + Math.random();
-                const cdDuration = 5 * 60 * 1000;
-                const endTime = Date.now() + cdDuration;
-                
-                localStorage.setItem(`item_cd_${uniqueId}`, endTime);
-
-                inventory.push({ ...item, uniqueId: uniqueId });
-                setStorage('inventory', inventory);
-                
-                hasNewItems = true;
-                setStorage('hasNewItems', true);
-                document.getElementById('inventory-badge').classList.add('active');
-
-                renderInventory();
-                closeModal();
-            };
-        }
-        modal.style.display = 'flex';
-    }
-
-    function closeModal() {
-        playClickSound();
-        document.getElementById('result-modal').style.display = 'none';
-        document.getElementById('modal-action-btn').onclick = closeModal;
-    }
-
-    function switchScreen(screenId, btnElement) {
-        playClickSound();
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-
-        document.getElementById(`screen-${screenId}`).classList.add('active');
-        btnElement.classList.add('active');
-
-        if (screenId === 'inventory') {
-            hasNewItems = false;
-            setStorage('hasNewItems', false);
-            document.getElementById('inventory-badge').classList.remove('active');
-            renderInventory();
-        }
-        if (screenId === 'main' && currentMode === 'free') {
-            checkFreeSpinTimer();
+            showModal('❌', 'Увы!', descText);
         }
     }
 
-    let withdrawTimers = {};
+    function updateBalance() {
+        document.getElementById('user-stars').innerText = userStars;
+        localStorage.setItem('tg_stars', userStars);
+    }
+
+    function saveInventory() {
+        localStorage.setItem('tg_inventory', JSON.stringify(inventory));
+        renderInventory();
+    }
 
     function renderInventory() {
         const grid = document.getElementById('inventory-grid');
         if (inventory.length === 0) {
             grid.innerHTML = '<div class="empty-inv">Инвентарь пока пуст. Откройте кейс!</div>';
+            document.getElementById('inventory-badge').classList.remove('active');
             return;
         }
-        grid.innerHTML = '';
+
+        document.getElementById('inventory-badge').classList.add('active');
+        let html = '';
         inventory.forEach((item, index) => {
-            const price = getItemPrice(item);
-            const div = document.createElement('div');
-            div.className = 'inventory-item';
-            
-            const uniqueKey = item.uniqueId || `${item.id}_${index}`;
-            const cdKey = `item_cd_${uniqueKey}`;
-            let savedCd = localStorage.getItem(cdKey);
-            const now = Date.now();
-            
-            if (!savedCd) {
-                const cdDuration = 5 * 60 * 1000;
-                savedCd = Date.now() + cdDuration;
-                localStorage.setItem(cdKey, savedCd);
-            }
-
-            let actionButtonHtml = '';
-            if (now < parseInt(savedCd)) {
-                const remainingSec = Math.ceil((parseInt(savedCd) - now) / 1000);
-                const mins = Math.floor(remainingSec / 60).toString().padStart(2, '0');
-                const secs = (remainingSec % 60).toString().padStart(2, '0');
-                actionButtonHtml = `<button class="withdraw-btn" id="wd-btn-${index}" disabled>⏳ ${mins}:${secs}</button>`;
-                startWithdrawTimer(index, uniqueKey, parseInt(savedCd));
-            } else {
-                actionButtonHtml = `<button class="withdraw-btn" id="wd-btn-${index}" onclick="withdrawGift(${index})">Вывести ↗</button>`;
-            }
-
-            div.innerHTML = `
-                ${item.icon}
-                <span class="item-name">${item.name}</span>
-                ${actionButtonHtml}
-                <button class="sell-btn" onclick="sellGift(${index})">Продать (+${price}⭐)</button>
+            html += `
+                <div class="inventory-item">
+                    ${item.icon}
+                    <span class="item-name">${item.name}</span>
+                    <button class="withdraw-btn" onclick="withdrawItem(${index})">Вывести</button>
+                    <button class="sell-btn" onclick="sellItem(${index})">Продать ${item.price}⭐</button>
+                </div>
             `;
-            grid.appendChild(div);
         });
+        grid.innerHTML = html;
     }
 
-    function startWithdrawTimer(index, timerId, endTime) {
-        if (withdrawTimers[timerId]) clearInterval(withdrawTimers[timerId]);
-
-        withdrawTimers[timerId] = setInterval(() => {
-            const now = Date.now();
-            const remainingSec = Math.ceil((endTime - now) / 1000);
-            const btn = document.getElementById(`wd-btn-${index}`);
-
-            if (!btn) {
-                clearInterval(withdrawTimers[timerId]);
-                return;
-            }
-
-            if (remainingSec <= 0) {
-                clearInterval(withdrawTimers[timerId]);
-                localStorage.removeItem(`item_cd_${timerId}`);
-                btn.disabled = false;
-                btn.className = "withdraw-btn";
-                btn.innerText = "Вывести ↗";
-                btn.onclick = () => withdrawGift(index);
-            } else {
-                const mins = Math.floor(remainingSec / 60).toString().padStart(2, '0');
-                const secs = (remainingSec % 60).toString().padStart(2, '0');
-                btn.innerText = `⏳ ${mins}:${secs}`;
-            }
-        }, 1000);
+    function withdrawItem(index) {
+        alert('Запрос на вывод подарка отправлен боту!');
+        inventory.splice(index, 1);
+        saveInventory();
     }
 
-    function withdrawGift(index) {
+    function sellItem(index) {
+        userStars += inventory[index].price;
+        updateBalance();
+        inventory.splice(index, 1);
+        saveInventory();
+    }
+
+    function showModal(icon, title, desc) {
+        document.getElementById('modal-icon').innerText = icon;
+        document.getElementById('modal-title').innerText = title;
+        document.getElementById('modal-desc').innerText = desc;
+        document.getElementById('result-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('result-modal').style.display = 'none';
+    }
+
+    function switchScreen(screenName, btnEl) {
         playClickSound();
-        const item = inventory[index];
-        showCustomConfirm('Вывод предмета', `Для вывода "${item.name}" перейдите в наш канал @givegiftfast.`, () => {
-            openExternalUrl(WITHDRAW_CHANNEL_URL);
-        });
-    }
-
-    function sellGift(index) {
-        playClickSound();
-        const item = inventory[index];
-        const price = getItemPrice(item);
-        showCustomConfirm('Продажа предмета', `Продать "${item.name}" за ${price} ⭐?`, () => {
-            stars += price;
-            setStorage('stars', stars);
-            document.getElementById('user-stars').innerText = stars;
-            
-            if (currentMode === 'paid') {
-                document.getElementById('spin-btn').disabled = (stars < 25);
-            }
-
-            inventory.splice(index, 1);
-            setStorage('inventory', inventory);
-            renderInventory();
-        });
-    }
-
-    function shareRefLink() {
-        playClickSound();
-        const link = document.getElementById('ref-link-input').value;
-        const text = "🎁 Открывай кейсы и выигрывай подарки в Telegram!";
-        if (tg?.openTelegramLink) {
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
-        } else {
-            navigator.clipboard.writeText(link).then(() => {
-                showCustomConfirm('Ссылка скопирована', 'Реферальная ссылка скопирована в буфер обмена! Отправьте её друзьям.', null);
-            });
-        }
-    }
-
-    function showCustomConfirm(title, desc, onConfirm) {
-        const modal = document.getElementById('confirm-modal');
-        document.getElementById('confirm-title').innerText = title;
-        document.getElementById('confirm-desc').innerText = desc;
-        
-        const btnContainer = document.getElementById('confirm-buttons-container');
-        btnContainer.innerHTML = `
-            <button class="close-btn" onclick="closeConfirmModal()">Отмена</button>
-            <button class="btn" id="confirm-action-btn">Да</button>
-        `;
-
-        const actionBtn = document.getElementById('confirm-action-btn');
-        actionBtn.onclick = () => {
-            playClickSound();
-            closeConfirmModal();
-            if (onConfirm) onConfirm();
-        };
-
-        modal.style.display = 'flex';
-    }
-
-    function closeConfirmModal() {
-        playClickSound();
-        document.getElementById('confirm-modal').style.display = 'none';
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById('screen-' + screenName).classList.add('active');
+        btnEl.classList.add('active');
     }
 
     function saveProfile() {
-        playClickSound();
-        const nameInput = document.getElementById('profile-name-input').value.trim();
-        if (nameInput === ADMIN_SECRET_CODE) {
-            showCustomConfirm('Режим разработчика', 'Админ-панель открыта!', null);
-            document.getElementById('admin-modal').style.display = 'flex';
-            return;
-        }
-        if (nameInput) {
-            username = nameInput;
-            setStorage('username', username);
-            document.getElementById('header-username').innerText = `🎁 ${username}`;
-            showCustomConfirm('Успешно', 'Имя профиля сохранено!', null);
-        }
+        username = document.getElementById('profile-name-input').value || 'Игрок';
+        localStorage.setItem('tg_username', username);
+        document.getElementById('header-username').innerText = '🎁 ' + username;
+        alert('Имя успешно сохранено!');
     }
 
     function copyToClipboard(elementId) {
-        playClickSound();
         const input = document.getElementById(elementId);
         input.select();
-        input.setSelectionRange(0, 99999);
-        navigator.clipboard.writeText(input.value).then(() => {
-            showCustomConfirm('Скопировано!', `Значение скопировано в буфер обмена.`, null);
-        });
+        navigator.clipboard.writeText(input.value);
+        alert('Скопировано в буфер обмена!');
     }
 
-    function requestAdminAuth() {
-        playClickSound();
-        document.getElementById('admin-pass-input').value = '';
-        document.getElementById('admin-auth-modal').style.display = 'flex';
-    }
-
-    function closeAdminAuthModal() {
-        playClickSound();
-        document.getElementById('admin-auth-modal').style.display = 'none';
-    }
-
-    function verifyAdminPass() {
-        playClickSound();
-        const pass = document.getElementById('admin-pass-input').value;
-        if (pass === ADMIN_PASSWORD) {
-            closeAdminAuthModal();
-            document.getElementById('admin-modal').style.display = 'flex';
-        } else {
-            closeAdminAuthModal();
-            showCustomConfirm('Ошибка', 'Неверный пароль администратора!', null);
-        }
-    }
-
-    function closeAdminModal() {
-        playClickSound();
-        document.getElementById('admin-modal').style.display = 'none';
-    }
-
-    function adminGrantStars() {
-        playClickSound();
-        const targetId = document.getElementById('admin-target-id').value.trim();
-        const amount = parseInt(document.getElementById('admin-stars-amount').value);
-
-        if (!targetId || isNaN(amount) || amount <= 0) {
-            showCustomConfirm('Ошибка', 'Введите корректный Telegram ID и количество.', null);
-            return;
-        }
-
-        if (targetId === userId) {
-            stars += amount;
-            setStorage('stars', stars);
-            document.getElementById('user-stars').innerText = stars;
-            if (currentMode === 'paid') {
-                document.getElementById('spin-btn').disabled = (stars < 25);
-            }
-            showCustomConfirm('Успешно!', `Зачислено +${amount} ⭐`, null);
-        } else {
-            showCustomConfirm('Запрос отправлен', `Перечислено ${amount} ⭐ на ID: ${targetId}`, null);
-        }
-        closeAdminModal();
-    }
-
-    function adminSelfAddStars() {
-        playClickSound();
-        stars += 1000;
-        setStorage('stars', stars);
-        document.getElementById('user-stars').innerText = stars;
-        if (currentMode === 'paid') {
-            document.getElementById('spin-btn').disabled = (stars < 25);
-        }
-        showCustomConfirm('Админ-баланс', 'Начислено +1000 ⭐!', null);
-        closeAdminModal();
+    function shareRefLink() {
+        alert('Ссылка для приглашения скопирована!');
     }
 
     function openDepositModal() {
-        playClickSound();
-        document.getElementById('deposit-info-box').style.display = 'none';
         document.getElementById('deposit-modal').style.display = 'flex';
     }
-
     function closeDepositModal() {
-        playClickSound();
         document.getElementById('deposit-modal').style.display = 'none';
+        document.getElementById('deposit-info-box').style.display = 'none';
     }
 
     function selectDeposit(type) {
-        playClickSound();
         const box = document.getElementById('deposit-info-box');
         box.style.display = 'block';
         if (type === 'sbp') {
-            box.innerHTML = 'Для оплаты через СБП напишите в поддержку<br><span class="deposit-link-clickable" onclick="openExternalUrl(\'' + SUPPORT_URL + '\')">👉 Написать (@frickhaus)</span>';
-        } else if (type === 'stars') {
-            box.innerHTML = 'Напишите для пополнения звездочками<br><span class="deposit-link-clickable" onclick="openExternalUrl(\'' + SUPPORT_URL + '\')">👉 Написать (@frickhaus)</span>';
+            box.innerHTML = 'Для поплнения по СБП переведите средства на карту: <b>2200 7000 1234 5678</b> (Тинькофф/Сбер) и отправьте чек в поддержку.';
+        } else {
+            box.innerHTML = 'Оплата через Telegram Stars доступна напрямую через официальный счет бота.';
         }
     }
 
     function openExternalUrl(url) {
-        playClickSound();
-        if (tg?.openTelegramLink) {
-            tg.openTelegramLink(url);
+        window.open(url, '_blank');
+    }
+
+    let musicEnabled = true;
+    let sfxEnabled = true;
+
+    function toggleMusicSwitch() {
+        musicEnabled = !musicEnabled;
+        document.getElementById('toggle-music').classList.toggle('active', musicEnabled);
+    }
+
+    function toggleSfxSwitch() {
+        sfxEnabled = !sfxEnabled;
+        document.getElementById('toggle-sfx').classList.toggle('active', sfxEnabled);
+    }
+
+    function playClickSound() {}
+
+    function requestAdminAuth() {
+        document.getElementById('admin-auth-modal').style.display = 'flex';
+    }
+    function closeAdminAuthModal() {
+        document.getElementById('admin-auth-modal').style.display = 'none';
+    }
+    function verifyAdminPass() {
+        const pass = document.getElementById('admin-pass-input').value;
+        if (pass === 'VLAD245FRICK929HAUS868BEZBELETNIK34') {
+            closeAdminAuthModal();
+            document.getElementById('admin-modal').style.display = 'flex';
         } else {
-            window.open(url, '_blank');
+            alert('Неверный пароль!');
         }
     }
+    function closeAdminModal() {
+        document.getElementById('admin-modal').style.display = 'none';
+    }
+    function adminGrantStars() {
+        const amount = parseInt(document.getElementById('admin-stars-amount').value) || 0;
+        userStars += amount;
+        updateBalance();
+        alert(`Успешно выдано ${amount} ⭐!`);
+        closeAdminModal();
+    }
+    function adminSelfAddStars() {
+        userStars += 1000;
+        updateBalance();
+        alert('Вам начислено +1000 ⭐!');
+        closeAdminModal();
+    }
 </script>
-
 </body>
 </html>
