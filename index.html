@@ -244,7 +244,7 @@
                     </div>
                 </div>
 
-                <div id="duel-status-text" style="font-size: 13px; color: #a78bfa; margin: 10px 0; display: none;">Поиск противника (10с)...</div>
+                <div id="duel-status-text" style="font-size: 13px; color: #a78bfa; margin: 10px 0; display: none;">Поиск противника...</div>
                 <button class="btn" id="spin-btn" onclick="startSpin()">Играть</button>
             </div>
         </div>
@@ -344,10 +344,10 @@
             <div class="modal-close-cross" onclick="closeDuelInfoModal()">✖</div>
             <div style="font-size:17px; font-weight:600; color:#a78bfa; margin-bottom:8px;">⚔️ Правила дуэли</div>
             <div style="font-size:12px; color:#d4d4d8; text-align: left; line-height: 1.5; margin-bottom: 14px;">
-                • <b>Минимальная ставка</b> в режиме дуэли составляет <b>25 звезд</b>.<br>
-                • Награда за победу — чистый <b>2X множитель</b> от вашей ставки.<br>
-                • <b>Ничья:</b> Если обоим игрокам выпадает одинаковый предмет, ставка возвращается каждому игроку на баланс в полном объеме.<br>
-                • <b>Баланс высоких ставок:</b> Чем выше ваша ставка относительно ставки бота, тем выше ваш приоритет на победу и крутые подарки!
+                • <b>Минимальная ставка</b> в режиме дуэли составляет <b>25 звезд</b>[cite: 3].<br>
+                • Награда за победу — чистый <b>2X множитель</b> от вашей ставки[cite: 3].<br>
+                • <b>Ничья:</b> Если обоим игрокам выпадает одинаковый предмет, ставка возвращается каждому игроку на баланс в полном объеме[cite: 3].<br>
+                • <b>Онлайн PvP:</b> Система соединяет вас с реальным другом или автоматически находит бота, если в очереди никого нет.
             </div>
             <button class="btn" onclick="closeDuelInfoModal()">Понятно</button>
         </div>
@@ -415,22 +415,18 @@
     let musicInterval = null;
 
     function initAudio() {
-        try {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-        } catch(e) {}
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
     function startBackgroundMusic() {
         if (musicInterval) return;
         const notes = [261.63, 329.63, 392.00, 523.25, 440.00, 349.23];
         musicInterval = setInterval(() => {
-            if (!musicEnabled || !audioCtx || audioCtx.state !== 'running') return;
+            if (!musicEnabled) return;
             try {
+                initAudio();
+                if (!audioCtx) return;
                 const note = notes[Math.floor(Math.random() * notes.length)];
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
@@ -447,14 +443,12 @@
     }
 
     function toggleMusicSwitch() {
-        initAudio();
         musicEnabled = !musicEnabled;
         document.getElementById('toggle-music').classList.toggle('active', musicEnabled);
         playClickSound();
     }
 
     function toggleSfxSwitch() {
-        initAudio();
         sfxEnabled = !sfxEnabled;
         document.getElementById('toggle-sfx').classList.toggle('active', sfxEnabled);
         playClickSound();
@@ -464,7 +458,7 @@
         if (!sfxEnabled) return;
         try {
             initAudio();
-            if (!audioCtx || audioCtx.state !== 'running') return;
+            if (!audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'sine';
@@ -482,7 +476,8 @@
     function playTickSound() {
         if (!sfxEnabled) return;
         try {
-            if (!audioCtx || audioCtx.state !== 'running') return;
+            initAudio();
+            if (!audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'square';
@@ -500,7 +495,8 @@
     function playFoundSound() {
         if (!sfxEnabled) return;
         try {
-            if (!audioCtx || audioCtx.state !== 'running') return;
+            initAudio();
+            if (!audioCtx) return;
             const now = audioCtx.currentTime;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
@@ -519,7 +515,8 @@
     function playWinSound() {
         if (!sfxEnabled) return;
         try {
-            if (!audioCtx || audioCtx.state !== 'running') return;
+            initAudio();
+            if (!audioCtx) return;
             const now = audioCtx.currentTime;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
@@ -537,49 +534,34 @@
         } catch(e) {}
     }
 
-    window.addEventListener('click', () => {
-        initAudio();
-        startBackgroundMusic();
-    }, { once: true });
-
+    // ПОДКЛЮЧЕНИЕ К ВАШЕМУ СЕРВЕРУ НА RENDER
     const socket = io('https://telegram-duel-server-t0w9.onrender.com');
 
-    socket.on('duel_opponent_disconnected', () => {
-        if (isSearchingDuel) {
-            if (searchIntervalTimer) { clearInterval(searchIntervalTimer); searchIntervalTimer = null; }
-            if (duelInputTimer) { clearInterval(duelInputTimer); duelInputTimer = null; }
-            
-            isSearchingDuel = false;
-            showModal('⚠️', 'Разрыв связи', 'Соперник разорвал соединение! Игра переведена на режим с ботом.', false, false, '', () => {
-                resetDuelInterfaceToDefault();
-            });
-        }
+    socket.on('duel_started', (data) => {
+        if (!isSearchingDuel) return;
+        isSearchingDuel = false;
+        playFoundSound();
+
+        document.getElementById('duel-status-text').style.display = 'none';
+        document.getElementById('duel-input-container').style.display = 'none';
+
+        startCountdownAndSpin(data.opponentName, data.isWinner, data.myGift, data.opponentGift);
     });
 
     let userId = localStorage.getItem('tg_user_id') || 'user_' + Math.floor(Math.random() * 1000000);
     localStorage.setItem('tg_user_id', userId);
     let username = localStorage.getItem('tg_username') || 'Игрок_' + userId.slice(-4);
-    
-    // Проверка первого захода: если баланс еще не сохранялся, даем 25 звезд стартовых
-    let savedStars = localStorage.getItem('tg_stars');
-    let userStars = savedStars !== null ? parseInt(savedStars) : 25;
-    if (isNaN(userStars)) userStars = 25;
-    localStorage.setItem('tg_stars', userStars);
-    
+    let userStars = parseInt(localStorage.getItem('tg_stars') || '25');
     let inventory = JSON.parse(localStorage.getItem('tg_inventory') || '[]');
     let referralList = JSON.parse(localStorage.getItem('tg_ref_list') || '[]');
     let paidCaseCount = parseInt(localStorage.getItem('tg_paid_case_count') || '0');
-    if (isNaN(paidCaseCount)) paidCaseCount = 0;
     
     let currentMode = 'paid';
     let isSpinning = false;
     let isSearchingDuel = false;
     let withdrawTimers = {};
-    let searchIntervalTimer = null;
-    let duelInputTimer = null;
 
     let myChosenBet = 25;
-    let currentOpponentData = null;
 
     let upgradeFromItems = [];
     let upgradeToItem = null;
@@ -587,24 +569,20 @@
     let selectTargetType = 'from';
 
     const giftsData = [
-        { name: "Ничего", icon: "❌", price: "" },
-        { name: "Сердце", icon: "💖", price: "15⭐" },
-        { name: "Мишка", icon: "🧸", price: "15⭐" },
-        { name: "Подарочек", icon: "🎁", price: "25⭐" },
-        { name: "Букет", icon: "💐", price: "25⭐" },
-        { name: "Шампанское", icon: "🍾", price: "50⭐" },
-        { name: "Ракета", icon: "🚀", price: "50⭐" },
-        { name: "Бриллиант", icon: "💎", price: "100⭐" },
-        { name: "Кольцо", icon: "💍", price: "100⭐" }
+        { name: "Ничего", icon: "❌", price: 0 },
+        { name: "Сердце", icon: "💖", price: 15 },
+        { name: "Мишка", icon: "🧸", price: 15 },
+        { name: "Подарочек", icon: "🎁", price: 25 },
+        { name: "Букет", icon: "💐", price: 25 },
+        { name: "Шампанское", icon: "🍾", price: 50 },
+        { name: "Ракета", icon: "🚀", price: 50 },
+        { name: "Бриллиант", icon: "💎", price: 100 },
+        { name: "Кольцо", icon: "💍", price: 100 }
     ];
 
     function getNumericPrice(giftName) {
-        if (giftName === "Ничего") return 0;
-        if (giftName === "Сердце" || giftName === "Мишка") return 15;
-        if (giftName === "Подарочек" || giftName === "Букет") return 25;
-        if (giftName === "Шампанское" || giftName === "Ракета") return 50;
-        if (giftName === "Бриллиант" || giftName === "Кольцо") return 100;
-        return 0;
+        const found = giftsData.find(g => g.name === giftName);
+        return found ? found.price : 0;
     }
 
     function getPaidRandomItem() {
@@ -640,7 +618,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-        updateBalance();
+        document.getElementById('user-stars').innerText = userStars;
         document.getElementById('header-username').innerText = '🎁 ' + username;
         document.getElementById('profile-id-input').value = userId;
         document.getElementById('profile-name-input').value = username;
@@ -649,6 +627,7 @@
         buildTrack('roulette-track');
         renderInventory();
         renderReferralStats();
+        startBackgroundMusic();
     });
 
     function renderReferralStats() {
@@ -704,15 +683,6 @@
         currentMode = mode;
         document.querySelectorAll('.switch-tab').forEach(el => el.classList.remove('active'));
         document.getElementById('tab-' + mode).classList.add('active');
-
-        if (searchIntervalTimer) {
-            clearInterval(searchIntervalTimer);
-            searchIntervalTimer = null;
-        }
-        if (duelInputTimer) {
-            clearInterval(duelInputTimer);
-            duelInputTimer = null;
-        }
 
         const spinBtn = document.getElementById('spin-btn');
         const duelStatus = document.getElementById('duel-status-text');
@@ -790,13 +760,8 @@
         playClickSound();
         let newVal = myChosenBet + delta;
 
-        if (newVal < 25) {
-            newVal = 25;
-        }
-
-        if (newVal > userStars) {
-            newVal = Math.max(25, userStars);
-        }
+        if (newVal < 25) newVal = 25;
+        if (newVal > userStars) newVal = Math.max(25, userStars);
 
         myChosenBet = newVal;
         document.getElementById('duel-bet-display-val').innerText = myChosenBet + ' ⭐';
@@ -814,7 +779,7 @@
         for (let i = 0; i < 40; i++) {
             let gift = getRandomItem();
             if (i === 25 && targetGift) gift = targetGift;
-            html += `<div class="roulette-item">${gift.icon}<span class="label">${gift.price}</span></div>`;
+            html += `<div class="roulette-item">${gift.icon}<span class="label">${gift.price ? gift.price + '⭐' : ''}</span></div>`;
         }
         track.innerHTML = html;
     }
@@ -869,16 +834,15 @@
             document.getElementById('item-select-title').innerText = 'Выберите желаемый подарок';
             
             let totalInputVal = upgradeFromItems.reduce((sum, item) => sum + (item.numericPrice || getNumericPrice(item.name)), 0) + upgradeExtraStars;
-
-            let availableGifts = giftsData.filter(g => g.price !== "" && getNumericPrice(g.name) > totalInputVal);
+            let availableGifts = giftsData.filter(g => g.price !== "" && g.price > totalInputVal);
 
             if (availableGifts.length === 0) {
-                grid.innerHTML = '<div class="empty-inv" style="grid-column: span 2;">Нет доступных подарков выше вашей текущей суммы! Добавьте предметы или уменьшите количество звезд.</div>';
+                grid.innerHTML = '<div class="empty-inv" style="grid-column: span 2;">Нет доступных подарков выше вашей текущей суммы!</div>';
             } else {
                 availableGifts.forEach((gift) => {
                     let div = document.createElement('div');
                     div.className = 'inventory-item';
-                    div.innerHTML = `${gift.icon}<span class="item-name">${gift.name} (${gift.price})</span>`;
+                    div.innerHTML = `${gift.icon}<span class="item-name">${gift.name} (${gift.price}⭐)</span>`;
                     div.onclick = () => {
                         upgradeToItem = gift;
                         document.getElementById('upgrade-to-slot').innerHTML = `${gift.icon}<span class="item-name">${gift.name}</span>`;
@@ -895,14 +859,12 @@
 
     function updateUpgradeFromSlotUI() {
         const slot = document.getElementById('upgrade-from-slot');
-        
         if (upgradeFromItems.length === 0 && upgradeExtraStars === 0) {
             slot.innerHTML = `<span style="font-size: 18px;">📦</span><span class="item-name">Ваши предметы</span>`;
             slot.classList.remove('selected');
         } else {
             slot.classList.add('selected');
             let iconsHtml = '<div class="selected-icons-row">';
-            
             let countToShow = Math.min(upgradeFromItems.length, 4);
             for (let i = 0; i < countToShow; i++) {
                 if (i === 3 && upgradeFromItems.length > 4) {
@@ -911,11 +873,9 @@
                     iconsHtml += `<span class="mini-icon-box">${upgradeFromItems[i].icon}</span>`;
                 }
             }
-
             if (upgradeExtraStars > 0 && upgradeFromItems.length === 0) {
                 iconsHtml += `<span class="mini-icon-box">⭐</span>`;
             }
-
             iconsHtml += '</div>';
 
             let labelText = 'Ваши предметы';
@@ -959,8 +919,7 @@
         let toVal = getNumericPrice(upgradeToItem.name);
         if (fromVal >= toVal) return 90;
         let rawChance = (fromVal / toVal) * 90;
-        let houseEdgedChance = rawChance * 0.85;
-        return Math.max(1, Math.min(90, Math.round(houseEdgedChance)));
+        return Math.max(1, Math.min(90, Math.round(rawChance * 0.85)));
     }
 
     function updateUpgradeChance() {
@@ -1004,7 +963,6 @@
 
         if (currentMode === 'upgrade') {
             let totalFromValue = upgradeFromItems.reduce((sum, item) => sum + (item.numericPrice || getNumericPrice(item.name)), 0) + upgradeExtraStars;
-            
             if (totalFromValue <= 0 || !upgradeToItem) {
                 showModal('⚠️', 'Ошибка апгрейда', 'Выберите предметы или добавьте звезды, а также выберите желаемый подарок!', false, false);
                 return;
@@ -1020,9 +978,7 @@
 
             upgradeFromItems.forEach(fromItem => {
                 let invIdx = inventory.findIndex(i => i.uniqueId === fromItem.uniqueId);
-                if (invIdx !== -1) {
-                    inventory.splice(invIdx, 1);
-                }
+                if (invIdx !== -1) inventory.splice(invIdx, 1);
             });
             saveInventory();
 
@@ -1030,21 +986,9 @@
             document.getElementById('spin-btn').disabled = true;
 
             let chance = calculateUpgradeChance();
-            let randomRoll = Math.random() * 100;
-            let isSuccess = randomRoll <= chance;
-
-            let finalDeg = 0;
+            let isSuccess = (Math.random() * 100) <= chance;
             let fullTurns = 360 * (4 + Math.floor(Math.random() * 3));
-            if (isSuccess) {
-                let successMaxAngle = Math.max(2, chance * 3.6 - 4);
-                let randomSuccessAngle = 2 + Math.random() * successMaxAngle;
-                finalDeg = fullTurns + randomSuccessAngle;
-            } else {
-                let failStartAngle = chance * 3.6 + 4;
-                if (failStartAngle >= 356) failStartAngle = 356;
-                let randomFailAngle = failStartAngle + Math.random() * (356 - failStartAngle);
-                finalDeg = fullTurns + randomFailAngle;
-            }
+            let finalDeg = isSuccess ? fullTurns + (2 + Math.random() * (chance * 3.6 - 4)) : fullTurns + (chance * 3.6 + 4 + Math.random() * (356 - (chance * 3.6 + 4)));
 
             let spinner = document.getElementById('upgrade-spinner');
             spinner.style.transition = 'transform 3.5s cubic-bezier(0.15, 0.85, 0.15, 1)';
@@ -1052,8 +996,7 @@
 
             let startTime = performance.now();
             function upgradeTick(currentTime) {
-                let elapsed = currentTime - startTime;
-                if (elapsed < 3500) {
+                if (currentTime - startTime < 3500) {
                     playTickSound();
                     setTimeout(() => requestAnimationFrame(upgradeTick), 120);
                 }
@@ -1070,8 +1013,7 @@
                 if (isSuccess) {
                     const uniqueId = Date.now() + Math.random();
                     localStorage.setItem(`item_cd_${uniqueId}`, Date.now() + 5 * 60 * 1000);
-                    let wonItem = { ...upgradeToItem, uniqueId: uniqueId, numericPrice: getNumericPrice(upgradeToItem.name) };
-                    inventory.push(wonItem);
+                    inventory.push({ ...upgradeToItem, uniqueId: uniqueId, numericPrice: getNumericPrice(upgradeToItem.name) });
                     saveInventory();
                     showModal('🎉', 'Апгрейд Успешен!', `Вы успешно апгрейдили на подарок "${upgradeToItem.name}"!`, false, true);
                 } else {
@@ -1109,9 +1051,7 @@
 
             if (inputVal < 25) {
                 spinBtnEl.classList.add('btn-error-shake');
-                setTimeout(() => {
-                    spinBtnEl.classList.remove('btn-error-shake');
-                }, 400);
+                setTimeout(() => spinBtnEl.classList.remove('btn-error-shake'), 400);
                 showModal('⚠️', 'Ошибка ставки', 'Минимальная ставка в дуэли должна составлять не менее 25 звезд!', false, false);
                 return;
             }
@@ -1133,24 +1073,15 @@
 
             document.getElementById('my-live-bet').innerText = `Ставка: ${myChosenBet} ⭐`;
 
-            let secondsLeft = 10;
             const statusEl = document.getElementById('duel-status-text');
             statusEl.style.display = 'block';
-            statusEl.innerText = `Поиск противника (${secondsLeft}с)...`;
+            statusEl.innerText = `Поиск противника онлайн...`;
 
-            if (searchIntervalTimer) clearInterval(searchIntervalTimer);
-            searchIntervalTimer = setInterval(() => {
-                if (!isSearchingDuel) return;
-                secondsLeft--;
-                if (secondsLeft > 0) {
-                    statusEl.innerText = `Поиск противника (${secondsLeft}с)...`;
-                } else {
-                    clearInterval(searchIntervalTimer);
-                    searchIntervalTimer = null;
-                    playFoundSound();
-                    startDuelInputPreparation();
-                }
-            }, 1000);
+            // ОТПРАВЛЯЕМ ЗАПРОС НА СЕРВЕР ДЛЯ РЕАЛЬНОГО МАТЧМЕЙЧИНГА
+            socket.emit('find_duel', {
+                username: username,
+                bet: myChosenBet
+            });
 
             return;
         }
@@ -1158,89 +1089,13 @@
 
     function cancelDuelSearch() {
         if (!isSearchingDuel) return;
-
-        if (searchIntervalTimer) {
-            clearInterval(searchIntervalTimer);
-            searchIntervalTimer = null;
-        }
-        if (duelInputTimer) {
-            clearInterval(duelInputTimer);
-            duelInputTimer = null;
-        }
-
         userStars += myChosenBet;
         updateBalance();
         isSearchingDuel = false;
-        
         resetDuelInterfaceToDefault();
     }
 
-    function startDuelInputPreparation() {
-        if (!isSearchingDuel) return;
-        let prepSec = 5;
-        const statusEl = document.getElementById('duel-status-text');
-        statusEl.style.display = 'block';
-        statusEl.innerText = `Бот найден! Подготовка к раунду (${prepSec}с)...`;
-
-        if (duelInputTimer) clearInterval(duelInputTimer);
-        duelInputTimer = setInterval(() => {
-            if (!isSearchingDuel) return;
-            prepSec--;
-            if (prepSec > 0) {
-                statusEl.innerText = `Бот найден! Подготовка к раунду (${prepSec}с)...`;
-            } else {
-                clearInterval(duelInputTimer);
-                duelInputTimer = null;
-                finalizeDuelBetAndStart();
-            }
-        }, 1000);
-    }
-
-    function generateBotBet() {
-        let possibleValues = [];
-        for (let i = 25; i <= 1000; i += 5) {
-            possibleValues.push(i);
-        }
-
-        let randPercent = Math.random() * 100;
-        let targetRange = [];
-
-        if (myChosenBet > 100) {
-            targetRange = possibleValues.filter(v => v >= Math.floor(myChosenBet * 0.5) && v <= Math.floor(myChosenBet * 1.5));
-            if (targetRange.length === 0) targetRange = [myChosenBet];
-        } else {
-            if (randPercent < 70) {
-                targetRange = possibleValues.filter(v => v >= 25 && v <= 125);
-            } else if (randPercent < 90) {
-                targetRange = possibleValues.filter(v => v > 125 && v <= 325);
-            } else {
-                targetRange = possibleValues.filter(v => v > 325 && v <= 1000);
-            }
-        }
-
-        if (targetRange.length === 0) targetRange = [25];
-        return targetRange[Math.floor(Math.random() * targetRange.length)];
-    }
-
-    function finalizeDuelBetAndStart() {
-        if (!isSearchingDuel) return;
-        if (duelInputTimer) {
-            clearInterval(duelInputTimer);
-            duelInputTimer = null;
-        }
-
-        isSearchingDuel = false;
-        document.getElementById('duel-status-text').style.display = 'none';
-        document.getElementById('duel-input-container').style.display = 'none';
-
-        let opponentChosenBet = generateBotBet();
-        document.getElementById('opp-live-bet').innerText = `Ставка: ${opponentChosenBet} ⭐`;
-
-        currentOpponentData = {
-            opponentName: 'игра с ботом',
-            opponentBet: opponentChosenBet
-        };
-
+    function startCountdownAndSpin(opponentName, isWinner, myGiftData, oppGiftData) {
         const overlay = document.getElementById('countdown-overlay');
         const numDisplay = document.getElementById('countdown-num-display');
         overlay.style.display = 'flex';
@@ -1258,74 +1113,37 @@
             } else {
                 clearInterval(countInterval);
                 overlay.style.display = 'none';
-                executeDuelSpin(currentOpponentData);
+                executeOnlineDuelSpin(opponentName, isWinner, myGiftData, oppGiftData);
             }
         }, 1000);
     }
 
-    function executeDuelSpin(oppData) {
-        let opponentName = oppData.opponentName;
-        let opponentBet = oppData.opponentBet;
-
+    function executeOnlineDuelSpin(opponentName, isWinner, myGiftData, oppGiftData) {
         document.getElementById('duel-status-text').style.display = 'block';
         document.getElementById('duel-status-text').innerText = `Соперник: ${opponentName}! Вращение...`;
-        document.getElementById('opponent-label-box').innerHTML = `🔴 Рулетка соперника (${opponentName}) <span id="opp-live-bet" style="color: #fbbf24; float: right;">Ставка: ${opponentBet} ⭐</span>`;
+        document.getElementById('opponent-label-box').innerHTML = `🔴 Рулетка соперника (${opponentName}) <span id="opp-live-bet" style="color: #fbbf24; float: right;">Ставка: ${myChosenBet} ⭐</span>`;
 
-        let myGift = getRandomItem();
-        let oppGift = getRandomItem();
-
-        let forcePlayerWin = false;
-        let forceOpponentWin = false;
-
-        if (myChosenBet > opponentBet) {
-            forcePlayerWin = Math.random() < 0.90;
-        } else if (opponentBet > myChosenBet) {
-            forceOpponentWin = Math.random() < 0.80;
-        } else {
-            forcePlayerWin = Math.random() < 0.5;
-        }
-
-        if (forcePlayerWin) {
-            const goodGifts = giftsData.filter(g => getNumericPrice(g.name) >= 25);
-            myGift = goodGifts[Math.floor(Math.random() * goodGifts.length)];
-            oppGift = giftsData[0];
-        } else if (forceOpponentWin) {
-            const goodGifts = giftsData.filter(g => getNumericPrice(g.name) >= 25);
-            oppGift = goodGifts[Math.floor(Math.random() * goodGifts.length)];
-            myGift = giftsData[0];
-        } else {
-            if (myGift.name === oppGift.name) {
-                myGift = giftsData[3];
-                oppGift = giftsData[0];
-            }
-        }
+        let myGift = giftsData.find(g => g.name === myGiftData.name) || myGiftData;
+        let oppGift = giftsData.find(g => g.name === oppGiftData.name) || oppGiftData;
 
         buildTrack('my-roulette-track', myGift);
         buildTrack('opponent-roulette-track', oppGift);
 
         setTimeout(() => {
-            const itemWidth = 75;
-            let targetIndex = 25;
-            const distance = -(targetIndex * itemWidth) + 140;
+            const distance = -(25 * 75) + 140;
+            document.getElementById('my-roulette-track').style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.15, 1)';
+            document.getElementById('my-roulette-track').style.transform = `translateX(${distance}px)`;
 
-            const myTrack = document.getElementById('my-roulette-track');
-            const oppTrack = document.getElementById('opponent-roulette-track');
-
-            myTrack.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.15, 1)';
-            myTrack.style.transform = `translateX(${distance}px)`;
-
-            oppTrack.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.15, 1)';
-            oppTrack.style.transform = `translateX(${distance}px)`;
+            document.getElementById('opponent-roulette-track').style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.15, 1)';
+            document.getElementById('opponent-roulette-track').style.transform = `translateX(${distance}px)`;
         }, 100);
 
         let startTime = performance.now();
         function tickAnimation(currentTime) {
-            let elapsed = currentTime - startTime;
-            let progress = elapsed / 4000;
+            let progress = (currentTime - startTime) / 4000;
             if (progress < 1) {
                 playTickSound();
-                let currentInterval = 40 + (progress * progress * 350);
-                setTimeout(() => requestAnimationFrame(tickAnimation), currentInterval);
+                setTimeout(() => requestAnimationFrame(tickAnimation), 40 + (progress * progress * 350));
             }
         }
         requestAnimationFrame(tickAnimation);
@@ -1342,21 +1160,18 @@
             if (myGift.name === oppGift.name) {
                 userStars += myChosenBet;
                 updateBalance();
-                showModal('🤝', 'Ничья!', `Обоим игрокам выпал одинаковый предмет (${myGift.name})! Ставка (${myChosenBet} ⭐) возвращена на ваш баланс.`, false, false, '', () => {
+                showModal('🤝', 'Ничья!', `Обоим игрокам выпал одинаковый предмет! Ставка (${myChosenBet} ⭐) возвращена на баланс.`, false, false, '', () => {
                     resetDuelInterfaceToDefault();
                 });
-                return;
-            }
-
-            if (myPrice > oppPrice || forcePlayerWin) {
+            } else if (isWinner || myPrice > oppPrice) {
                 let winnings = myChosenBet * 2;
                 userStars += winnings;
                 updateBalance();
-                showModal('🏆', 'Победа в Дуэли! 🎉', `Вы выиграли дуэль! На ваш баланс зачислено 2X суммы вашей ставки (+ ${winnings} ⭐).`, false, true, '', () => {
+                showModal('🏆', 'Победа в Дуэли! 🎉', `Вы выиграли дуэль! На ваш баланс зачислено 2X ставки (+ ${winnings} ⭐).`, false, true, '', () => {
                     resetDuelInterfaceToDefault();
                 });
             } else {
-                showModal('🥺', 'ПОРАЖЕНИЕ', `Ваша ставка сгорела.`, false, false, `соперник ${opponentName} выиграл раунд!`, () => {
+                showModal('🥺', 'ПОРАЖЕНИЕ', `Ваша ставка сгорела.`, false, false, `Соперник ${opponentName} выиграл раунд!`, () => {
                     resetDuelInterfaceToDefault();
                 });
             }
@@ -1369,8 +1184,7 @@
         buildTrack('roulette-track', winningGift);
 
         const track = document.getElementById('roulette-track');
-        const itemWidth = 75;
-        const distance = -(25 * itemWidth) + 140;
+        const distance = -(25 * 75) + 140;
 
         setTimeout(() => {
             track.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.2, 1)';
@@ -1379,12 +1193,10 @@
 
         let startTime = performance.now();
         function tickAnimation(currentTime) {
-            let elapsed = currentTime - startTime;
-            let progress = elapsed / 4000;
+            let progress = (currentTime - startTime) / 4000;
             if (progress < 1) {
                 playTickSound();
-                let currentInterval = 40 + (progress * progress * 350);
-                setTimeout(() => requestAnimationFrame(tickAnimation), currentInterval);
+                setTimeout(() => requestAnimationFrame(tickAnimation), 40 + (progress * progress * 350));
             }
         }
         requestAnimationFrame(tickAnimation);
@@ -1408,7 +1220,6 @@
     }
 
     function updateBalance() {
-        if (isNaN(userStars)) userStars = 25;
         document.getElementById('user-stars').innerText = userStars;
         localStorage.setItem('tg_stars', userStars);
     }
@@ -1506,14 +1317,11 @@
         document.getElementById('modal-icon').innerText = '⭐';
         document.getElementById('modal-title').innerText = 'Продано!';
         document.getElementById('modal-desc').innerText = `Предмет продан за ${pVal} ⭐.`;
-        
-        const subDescEl = document.getElementById('modal-sub-desc');
-        subDescEl.style.display = 'none';
+        document.getElementById('modal-sub-desc').style.display = 'none';
 
         const actionBtn = document.getElementById('modal-action-btn');
         actionBtn.innerText = 'ОТЛИЧНО';
         actionBtn.onclick = closeModal;
-
         document.getElementById('result-modal').style.display = 'flex';
     }
 
@@ -1523,7 +1331,6 @@
         document.getElementById('modal-icon').innerText = icon;
         document.getElementById('modal-title').innerText = title;
         document.getElementById('modal-desc').innerText = desc;
-        
         globalModalCloseCallback = onCloseCallback;
 
         const subDescEl = document.getElementById('modal-sub-desc');
@@ -1537,10 +1344,7 @@
         const actionBtn = document.getElementById('modal-action-btn');
         if (isNothing) {
             actionBtn.innerText = 'Крутить еще раз';
-            actionBtn.onclick = () => {
-                closeModal();
-                startSpin();
-            };
+            actionBtn.onclick = () => { closeModal(); startSpin(); };
         } else if (isWin) {
             actionBtn.innerText = 'Ура!';
             actionBtn.onclick = closeModal;
@@ -1582,10 +1386,8 @@
         playClickSound();
         const box = document.getElementById('deposit-info-box');
         box.style.display = 'block';
-        if (type === 'sbp') {
-            box.innerHTML = 'Для оплаты перейдите в поддержку<br><span class="deposit-link-clickable" onclick="openExternalUrl(\'https://t.me/frickhaus\')">👉 Написать (@frickhaus)</span>';
-        } else if (type === 'stars') {
-            box.innerHTML = 'На счет покупки писать @frickhaus<br><span class="deposit-link-clickable" onclick="openExternalUrl(\'https://t.me/frickhaus\')">👉 Написать (@frickhaus)</span>';
+        if (type === 'sbp' || type === 'stars') {
+            box.innerHTML = 'На счет пополнения писать в поддержу:<br><span class="deposit-link-clickable" onclick="openExternalUrl(\'https://t.me/frickhaus\')">👉 Написать (@frickhaus)</span>';
         }
     }
 
