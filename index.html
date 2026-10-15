@@ -15,6 +15,7 @@
         .balance-container { display: flex; align-items: center; gap: 8px; }
         .balance-box { background: #27272a; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #fbbf24; display: flex; align-items: center; gap: 4px; }
         .add-stars-btn { background: #3f3f46; color: #ffffff; border: 1px solid #52525b; width: 28px; height: 28px; border-radius: 50%; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .add-stars-btn:active { transform: scale(0.9); }
         .content { flex: 1; position: relative; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px; }
         .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; animation: fadeIn 0.25s ease; }
         .screen.active { display: flex; }
@@ -82,6 +83,7 @@
         .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: none; justify-content: center; align-items: center; z-index: 100; }
         .modal-card { background: #202024; border: 1px solid #3f3f46; border-radius: 20px; padding: 20px; text-align: center; max-width: 320px; width: 88%; position: relative; }
         .modal-close-cross { position: absolute; top: 10px; right: 14px; font-size: 18px; color: #a1a1aa; cursor: pointer; }
+        .close-btn { background: #27272a; color: #a1a1aa; border: 1px solid #3f3f46; padding: 10px 16px; border-radius: 10px; font-size: 13px; cursor: pointer; width: 100%; }
 
         .countdown-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 200; border-radius: 16px; }
         .countdown-number { font-size: 90px; font-weight: 900; animation: scaleNum 0.9s infinite alternate; text-shadow: 0 0 20px rgba(255,255,255,0.4); }
@@ -107,6 +109,16 @@
         .add-stars-control { display: flex; align-items: center; justify-content: center; gap: 10px; background: #18181b; border: 1px solid #27272a; padding: 6px 12px; border-radius: 10px; width: 100%; font-size: 11px; color: #a1a1aa; }
         .step-btn { background: #27272a; color: #fff; border: 1px solid #3f3f46; width: 24px; height: 24px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .step-btn:active { transform: scale(0.9); }
+
+        .ref-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+        .ref-stat-box { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 10px; text-align: center; }
+        .ref-stat-val { font-size: 18px; font-weight: 700; color: #a78bfa; margin-top: 2px; }
+        .ref-stat-val.gold { color: #fbbf24; }
+        .ref-stat-lbl { font-size: 10px; color: #a1a1aa; }
+        .ref-share-btn { background: linear-gradient(135deg, #a78bfa, #8b5cf6); color: #fff; border: none; padding: 11px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px; }
+        .ref-list-box { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 10px; margin-top: 6px; max-height: 140px; overflow-y: auto; text-align: left; }
+        .ref-list-title { font-size: 11px; font-weight: 600; color: #a1a1aa; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+        .ref-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #202024; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -210,18 +222,30 @@
         <div class="screen" id="screen-referral">
             <div class="profile-card">
                 <h2>👥 Пригласи друзей</h2>
-                <p style="font-size: 12px; color: #a1a1aa;">Получай +10 ⭐ за каждого друга!</p>
+                <p style="font-size: 12px; color: #a1a1aa;">Получай +10 ⭐ за каждого приглашенного друга!</p>
+                <div class="ref-stats-grid">
+                    <div class="ref-stat-box"><div class="ref-stat-lbl">Приглашено друзей</div><div class="ref-stat-val" id="ref-count-val">0</div></div>
+                    <div class="ref-stat-box"><div class="ref-stat-lbl">Всего заработано</div><div class="ref-stat-val gold" id="ref-earned-val">0 ⭐</div></div>
+                </div>
                 <div class="input-group" style="margin-top: 4px;"><label>Реферальная ссылка</label><div class="input-row"><input type="text" id="ref-link-input" readonly><button class="copy-btn" onclick="copyToClipboard('ref-link-input')">📋</button></div></div>
-                <button class="btn" onclick="shareReferralLink()">✈️ Поделиться</button>
+                <button class="ref-share-btn" onclick="shareReferralLink()">✈️ Поделиться с другом</button>
+                <div class="ref-list-box">
+                    <div class="ref-list-title"><span>Ваши рефералы</span><span style="font-size: 10px; color: #8b5cf6;" id="ref-list-count">0 чел.</span></div>
+                    <div id="ref-list-container"><div style="font-size: 11px; color: #71717a; text-align: center; padding: 12px 0;">Вы пока не пригласили друзей</div></div>
+                </div>
             </div>
         </div>
 
         <div class="screen" id="screen-profile">
             <div class="profile-card">
-                <h2>👤 Профиль</h2>
+                <h2>👤 Профиль игрока</h2>
                 <div class="input-group"><label>Telegram ID</label><div class="input-row"><input type="text" id="profile-id-input" readonly><button class="copy-btn" onclick="copyToClipboard('profile-id-input')">📋</button></div></div>
-                <div class="input-group"><label>Имя</label><div class="input-row"><input type="text" id="profile-name-input" placeholder="Имя"></div></div>
-                <button class="btn" onclick="saveProfile()">Сохранить</button>
+                <div class="input-group"><label>Имя пользователя</label><div class="input-row"><input type="text" id="profile-name-input" placeholder="Введите имя"></div></div>
+                <button class="btn" onclick="saveProfile()">Сохранить имя</button>
+                <div class="setting-row"><span>🎵 Фоновая музыка</span><div class="toggle-switch active" id="toggle-music" onclick="toggleMusicSwitch()"><div class="toggle-ball"></div></div></div>
+                <div class="setting-row"><span>🔊 Звуковые эффекты</span><div class="toggle-switch active" id="toggle-sfx" onclick="toggleSfxSwitch()"><div class="toggle-ball"></div></div></div>
+                <div onclick="openExternalUrl('https://t.me/frickhaus')" class="link-btn">💬 Написать в техподдержку</div>
+                <div onclick="requestAdminAuth()" class="admin-btn">⚙️ Панель Администратора</div>
             </div>
         </div>
     </div>
@@ -231,6 +255,19 @@
         <button class="nav-btn" onclick="switchScreen('inventory', this)"><span class="icon">🎒<div class="badge-dot" id="inventory-badge"></div></span>Инвентарь</button>
         <button class="nav-btn" onclick="switchScreen('referral', this)"><span class="icon">👥</span>Друзья</button>
         <button class="nav-btn" onclick="switchScreen('profile', this)"><span class="icon">👤</span>Профиль</button>
+    </div>
+
+    <div class="modal-overlay" id="duel-info-modal">
+        <div class="modal-card">
+            <div class="modal-close-cross" onclick="closeDuelInfoModal()">✖</div>
+            <div style="font-size:17px; font-weight:600; color:#a78bfa; margin-bottom:8px;">⚔️ Правила дуэли</div>
+            <div style="font-size:12px; color:#d4d4d8; text-align: left; line-height: 1.5; margin-bottom: 14px;">
+                • <b>Минимальная ставка:</b> 25 звезд.<br>
+                • <b>Награда:</b> 2X множитель.<br>
+                • <b>Правило ставки:</b> Превышение в 2+ раза дает 80% шанс на победу (при 10% ничьей и 10% поражения).
+            </div>
+            <button class="btn" onclick="closeDuelInfoModal()">Понятно</button>
+        </div>
     </div>
 
     <div class="modal-overlay" id="result-modal">
@@ -255,16 +292,161 @@
     <div class="modal-overlay" id="deposit-modal">
         <div class="modal-card">
             <div class="modal-close-cross" onclick="closeDepositModal()">✖</div>
-            <div style="font-size:17px; font-weight:600; margin-bottom:6px;">Пополнение</div>
-            <button class="btn" onclick="openExternalUrl('https://t.me/frickhaus')">💬 Написать в поддержку</button>
-            <button class="btn" onclick="closeDepositModal()" style="background:#27272a;">Закрыть</button>
+            <div style="font-size:17px; font-weight:600; margin-bottom:6px;">Пополнение баланса</div>
+            <div style="font-size:12px; color:#a1a1aa;">Выберите способ:</div>
+            <div class="deposit-options">
+                <button class="deposit-option-btn" onclick="selectDeposit()">💳 Оплата через СБП</button>
+                <button class="deposit-option-btn" onclick="selectDeposit()">⭐ Звездочки TG</button>
+            </div>
+            <div class="deposit-info-box" id="deposit-info-box"></div>
+            <button class="close-btn" onclick="closeDepositModal()">Закрыть</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="admin-auth-modal">
+        <div class="modal-card">
+            <div class="modal-close-cross" onclick="closeAdminAuthModal()">✖</div>
+            <div style="font-size:17px; font-weight:600; color:#ef4444; margin-bottom:8px;">🔒 Доступ ограничен</div>
+            <div class="input-group" style="margin-bottom: 12px;"><input type="password" id="admin-pass-input" placeholder="Пароль..." style="text-align: center;"></div>
+            <button class="btn" onclick="verifyAdminPass()" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">Войти</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="admin-modal">
+        <div class="modal-card">
+            <div class="modal-close-cross" onclick="closeAdminModal()">✖</div>
+            <div style="font-size:17px; font-weight:600; color:#ef4444; margin-bottom:8px;">⚙️ Админ Панель</div>
+            <button class="btn" onclick="adminSelfAddStars()" style="background: linear-gradient(135deg, #8b5cf6, #ec4899); margin-bottom: 8px;">+1000 ⭐ Себе</button>
+            <button class="close-btn" onclick="closeAdminModal()">Закрыть</button>
         </div>
     </div>
 </div>
 
 <script>
     let audioCtx = null;
+    let musicEnabled = true;
     let sfxEnabled = true;
+    let musicInterval = null;
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function startBackgroundMusic() {
+        if (musicInterval) return;
+        const notes = [261.63, 329.63, 392.00, 523.25, 440.00, 349.23];
+        musicInterval = setInterval(() => {
+            if (!musicEnabled) return;
+            try {
+                initAudio();
+                if (!audioCtx) return;
+                const note = notes[Math.floor(Math.random() * notes.length)];
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(note, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 2.0);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 2.0);
+            } catch(e) {}
+        }, 3000);
+    }
+
+    function toggleMusicSwitch() {
+        musicEnabled = !musicEnabled;
+        document.getElementById('toggle-music').classList.toggle('active', musicEnabled);
+        playClickSound();
+    }
+
+    function toggleSfxSwitch() {
+        sfxEnabled = !sfxEnabled;
+        document.getElementById('toggle-sfx').classList.toggle('active', sfxEnabled);
+        playClickSound();
+    }
+
+    function playClickSound() {
+        if (!sfxEnabled) return;
+        try {
+            initAudio();
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(450, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.04);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.04);
+        } catch(e) {}
+    }
+
+    function playTickSound() {
+        if (!sfxEnabled) return;
+        try {
+            initAudio();
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.015);
+            gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.015);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.015);
+        } catch(e) {}
+    }
+
+    function playFoundSound() {
+        if (!sfxEnabled) return;
+        try {
+            initAudio();
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, now);
+            osc.frequency.setValueAtTime(880.00, now + 0.12);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.35);
+        } catch(e) {}
+    }
+
+    function playWinSound() {
+        if (!sfxEnabled) return;
+        try {
+            initAudio();
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(659.25, now + 0.1);
+            osc.frequency.setValueAtTime(783.99, now + 0.2);
+            osc.frequency.setValueAtTime(1046.50, now + 0.3);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.6);
+        } catch(e) {}
+    }
 
     const socket = io('https://telegram-duel-server-t0w9.onrender.com');
 
@@ -273,8 +455,11 @@
         if (duelPrepTimer) { clearInterval(duelPrepTimer); duelPrepTimer = null; }
         if (duelSearchTimer) { clearInterval(duelSearchTimer); duelSearchTimer = null; }
 
+        playFoundSound();
         duelState = 'found';
-        document.getElementById('duel-status-text').innerText = `Противник найден: ${data.opponentName}!`;
+        const statusEl = document.getElementById('duel-status-text');
+        statusEl.innerText = `Противник найден: ${data.opponentName}!`;
+
         document.getElementById('opp-live-bet').innerText = `Ставка: ${data.opponentBet} ⭐`;
         document.getElementById('opponent-label-box').innerHTML = `🔴 Рулетка соперника (${data.opponentName}) <span id="opp-live-bet" style="color: #fbbf24; float: right;">Ставка: ${data.opponentBet} ⭐</span>`;
 
@@ -289,6 +474,7 @@
     let username = localStorage.getItem('tg_username') || 'Игрок_' + userId.slice(-4);
     let userStars = parseInt(localStorage.getItem('tg_stars') || '25');
     let inventory = JSON.parse(localStorage.getItem('tg_inventory') || '[]');
+    let referralList = JSON.parse(localStorage.getItem('tg_ref_list') || '[]');
     let paidCaseCount = parseInt(localStorage.getItem('tg_paid_case_count') || '0');
     
     let currentMode = 'paid';
@@ -296,11 +482,10 @@
     let duelState = 'idle';
     let duelPrepTimer = null;
     let duelSearchTimer = null;
-    let myChosenBet = 25;
 
-    // Переменные для апгрейдов
-    let selectedUpgradeFrom = null; // { item, index }
-    let selectedUpgradeTo = null;   // gift object
+    let myChosenBet = 25;
+    let selectedUpgradeFrom = null;
+    let selectedUpgradeTo = null;
     let upgradeExtraStars = 0;
     let selectTargetType = 'from';
 
@@ -321,30 +506,23 @@
         return found ? found.price : 0;
     }
 
-    // Точные шансы для платного кейса с бонусом +25% на первые прокруты
+    // Точные шансы для платного кейса с бонусом +25% на первые 3 прокрутки
     function getPaidRandomItem() {
         let rand = Math.random() * 100;
-        
-        // При первых 3 прокрутах увеличиваем шанс на ценные предметы на 25%
         if (paidCaseCount < 3) {
             rand = Math.max(0, rand - 25);
         }
 
         if (rand < 40) {
-            // Ничего (крестик) - 40%
-            return giftsData[0];
+            return giftsData[0]; // Ничего (40%)
         } else if (rand < 80) {
-            // Мишка или Сердечко (по 20% каждый, итого 40%)
-            return Math.random() < 0.5 ? giftsData[1] : giftsData[2];
+            return Math.random() < 0.5 ? giftsData[1] : giftsData[2]; // Сердечко / Мишка (по 20%, всего 40%)
         } else if (rand < 90) {
-            // Букет или Подарочек (по 5% каждый, итого 10%)
-            return Math.random() < 0.5 ? giftsData[3] : giftsData[4];
+            return Math.random() < 0.5 ? giftsData[3] : giftsData[4]; // Букет / Подарочек (по 5%, всего 10%)
         } else if (rand < 99) {
-            // Шампанское или Ракета (по 4.5% каждый, итого 9%)
-            return Math.random() < 0.5 ? giftsData[5] : giftsData[6];
+            return Math.random() < 0.5 ? giftsData[5] : giftsData[6]; // Шампанское / Ракета (по 4.5%, всего 9%)
         } else {
-            // Алмаз или Кольцо (по 0.5% каждый, итого 1%)
-            return Math.random() < 0.5 ? giftsData[7] : giftsData[8];
+            return Math.random() < 0.5 ? giftsData[7] : giftsData[8]; // Алмаз / Кольцо (по 0.5%, всего 1%)
         }
     }
 
@@ -365,11 +543,37 @@
         document.getElementById('header-username').innerText = '🎁 ' + username;
         document.getElementById('profile-id-input').value = userId;
         document.getElementById('profile-name-input').value = username;
+        document.getElementById('ref-link-input').value = 'https://t.me/giftcasebot?start=' + userId;
+        
         buildTrack('roulette-track');
         renderInventory();
+        renderReferralStats();
+        startBackgroundMusic();
     });
 
+    function renderReferralStats() {
+        const count = referralList.length;
+        document.getElementById('ref-count-val').innerText = count;
+        document.getElementById('ref-earned-val').innerText = (count * 10) + ' ⭐';
+        document.getElementById('ref-list-count').innerText = count + ' чел.';
+    }
+
+    function shareReferralLink() {
+        playClickSound();
+        const refLink = document.getElementById('ref-link-input').value;
+        const text = encodeURIComponent("🎁 Заходи в игру Подарочные Кейсы!");
+        const url = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${text}`;
+        const tg = window.Telegram?.WebApp;
+        if (tg?.openTelegramLink) tg.openTelegramLink(url); else window.open(url, '_blank');
+    }
+
+    function setDuelControlsDisabled(state) {
+        document.getElementById('duel-minus-btn').disabled = state;
+        document.getElementById('duel-plus-btn').disabled = state;
+    }
+
     function switchRouletteMode(mode) {
+        playClickSound();
         if (isSpinning || (duelState !== 'idle' && duelState !== 'preparing')) return;
         if (duelState === 'searching' || duelState === 'found') cancelDuelSearch();
 
@@ -377,17 +581,18 @@
         document.querySelectorAll('.switch-tab').forEach(el => el.classList.remove('active'));
         document.getElementById('tab-' + mode).classList.add('active');
 
+        const spinBtn = document.getElementById('spin-btn');
+        const duelStatus = document.getElementById('duel-status-text');
         const singleBox = document.getElementById('single-roulette-box');
         const duelBox = document.getElementById('duel-arena-box');
         const upgradeBox = document.getElementById('upgrade-arena-box');
         const duelInputContainer = document.getElementById('duel-input-container');
-        const spinBtn = document.getElementById('spin-btn');
 
         singleBox.style.display = 'none';
         duelBox.style.display = 'none';
         upgradeBox.style.display = 'none';
+        duelStatus.style.display = 'none';
         duelInputContainer.style.display = 'none';
-        document.getElementById('duel-status-text').style.display = 'none';
         spinBtn.disabled = false;
         spinBtn.classList.remove('cancel-mode');
 
@@ -406,8 +611,68 @@
         }
     }
 
-    // --- Логика Апгрейда ---
+    function resetDuelInterfaceToDefault() {
+        duelState = 'idle';
+        if (duelPrepTimer) { clearInterval(duelPrepTimer); duelPrepTimer = null; }
+        if (duelSearchTimer) { clearInterval(duelSearchTimer); duelSearchTimer = null; }
+
+        document.getElementById('case-title').innerText = 'PvP Дуэль';
+        const spinBtn = document.getElementById('spin-btn');
+        spinBtn.innerText = 'Играть';
+        spinBtn.disabled = false;
+        spinBtn.classList.remove('cancel-mode');
+        document.getElementById('duel-arena-box').style.display = 'block';
+        document.getElementById('duel-input-container').style.display = 'block';
+        document.getElementById('duel-status-text').style.display = 'none';
+
+        setDuelControlsDisabled(false);
+        myChosenTrustBet();
+        buildTrack('my-roulette-track');
+        buildTrack('opponent-roulette-track');
+    }
+
+    function myChosenTrustBet() {
+        let defaultVal = 25;
+        if (userStars < defaultVal) defaultVal = Math.max(0, userStars);
+        myChosenBet = defaultVal;
+        document.getElementById('duel-bet-display-val').innerText = myChosenBet + ' ⭐';
+        document.getElementById('my-live-bet').innerText = `Ставка: ${myChosenBet} ⭐`;
+        document.getElementById('opp-live-bet').innerText = `Ставка: 25 ⭐`;
+    }
+
+    function adjustDuelBet(delta) {
+        if (isSpinning || duelState !== 'idle') return;
+        playClickSound();
+        let newVal = myChosenBet + delta;
+        if (newVal < 25) newVal = 25;
+        if (newVal > userStars) newVal = Math.max(25, userStars);
+
+        myChosenBet = newVal;
+        document.getElementById('duel-bet-display-val').innerText = myChosenBet + ' ⭐';
+        document.getElementById('my-live-bet').innerText = `Ставка: ${myChosenBet} ⭐`;
+    }
+
+    function buildTrack(elementId, targetGift = null) {
+        const track = document.getElementById(elementId);
+        if (!track) return;
+        track.style.transition = 'none';
+        track.style.transform = 'translateX(0px)';
+        track.innerHTML = '';
+        
+        let html = '';
+        for (let i = 0; i < 40; i++) {
+            let gift = getRandomItem();
+            if (i === 25 && targetGift) gift = targetGift;
+            html += `<div class="roulette-item">${gift.icon}<span class="label">${gift.price ? gift.price + '⭐' : ''}</span></div>`;
+        }
+        track.innerHTML = html;
+    }
+
+    function openDuelInfoModal() { playClickSound(); document.getElementById('duel-info-modal').style.display = 'flex'; }
+    function closeDuelInfoModal() { playClickSound(); document.getElementById('duel-info-modal').style.display = 'none'; }
+    
     function openItemSelectModal(targetType) {
+        playClickSound();
         selectTargetType = targetType;
         const modal = document.getElementById('item-select-modal');
         const grid = document.getElementById('item-select-grid');
@@ -447,10 +712,12 @@
     }
 
     function closeItemSelectModal() {
+        playClickSound();
         document.getElementById('item-select-modal').style.display = 'none';
     }
 
     function changeUpgradeStars(delta) {
+        playClickSound();
         upgradeExtraStars = Math.max(0, upgradeExtraStars + delta);
         if (userStars < upgradeExtraStars) upgradeExtraStars = userStars;
         updateUpgradeUI();
@@ -503,14 +770,13 @@
 
         let neededStars = upgradeExtraStars;
         if (userStars < neededStars) {
-            showModal('⭐', 'Недостаточно звезд', 'Не хватает звезд на балансе для добавления в апгрейд!', false, false);
+            showModal('⭐', 'Недостаточно звезд', 'Не хватает звезд на балансе!', false, false);
             return;
         }
 
         userStars -= neededStars;
         updateBalance();
 
-        // Удаляем использованный предмет из инвентаря
         inventory.splice(selectedUpgradeFrom.index, 1);
         saveInventory();
 
@@ -532,6 +798,7 @@
             let success = Math.random() * 100 < chance;
 
             if (success) {
+                playWinSound();
                 const uniqueId = Date.now() + Math.random();
                 inventory.push({ ...selectedUpgradeTo, uniqueId, numericPrice: selectedUpgradeTo.price });
                 saveInventory();
@@ -539,70 +806,20 @@
                 selectedUpgradeTo = null;
                 upgradeExtraStars = 0;
                 updateUpgradeUI();
-                showModal(selectedUpgradeTo.icon, 'Успех!', `Апгрейд прошел успешно! Вы получили ${selectedUpgradeTo.name}!`, false, true);
+                showModal(selectedUpgradeTo.icon, 'Успех!', `Апгрейд прошел успешно! Получен предмет ${selectedUpgradeTo.name}!`, false, true);
             } else {
                 selectedUpgradeFrom = null;
                 selectedUpgradeTo = null;
                 upgradeExtraStars = 0;
                 updateUpgradeUI();
-                showModal('❌', 'Неудача', 'К сожалению, апгрейд не удался, предмет сгорел.', false, false);
+                showModal('❌', 'Неудача', 'Апгрейд не удался, предмет сгорел.', false, false);
             }
         }, 3100);
     }
-    // ----------------------------
-
-    function resetDuelInterfaceToDefault() {
-        duelState = 'idle';
-        if (duelPrepTimer) { clearInterval(duelPrepTimer); duelPrepTimer = null; }
-        if (duelSearchTimer) { clearInterval(duelSearchTimer); duelSearchTimer = null; }
-
-        document.getElementById('case-title').innerText = 'PvP Дуэль';
-        const spinBtn = document.getElementById('spin-btn');
-        spinBtn.innerText = 'Играть';
-        spinBtn.disabled = false;
-        spinBtn.classList.remove('cancel-mode');
-        document.getElementById('duel-arena-box').style.display = 'block';
-        document.getElementById('duel-input-container').style.display = 'block';
-        document.getElementById('duel-status-text').style.display = 'none';
-
-        myChosenTrustBet();
-        buildTrack('my-roulette-track');
-        buildTrack('opponent-roulette-track');
-    }
-
-    function myChosenTrustBet() {
-        myChosenBet = Math.min(userStars, 25);
-        document.getElementById('duel-bet-display-val').innerText = myChosenBet + ' ⭐';
-        document.getElementById('my-live-bet').innerText = `Ставка: ${myChosenBet} ⭐`;
-        document.getElementById('opp-live-bet').innerText = `Ставка: 25 ⭐`;
-    }
-
-    function adjustDuelBet(delta) {
-        if (isSpinning || duelState !== 'idle') return;
-        let newVal = myChosenBet + delta;
-        if (newVal < 25) newVal = 25;
-        if (newVal > userStars) newVal = Math.max(25, userStars);
-        myChosenBet = newVal;
-        document.getElementById('duel-bet-display-val').innerText = myChosenBet + ' ⭐';
-        document.getElementById('my-live-bet').innerText = `Ставка: ${myChosenBet} ⭐`;
-    }
-
-    function buildTrack(elementId, targetGift = null) {
-        const track = document.getElementById(elementId);
-        if (!track) return;
-        track.style.transition = 'none';
-        track.style.transform = 'translateX(0px)';
-        track.innerHTML = '';
-        let html = '';
-        for (let i = 0; i < 40; i++) {
-            let gift = getRandomItem();
-            if (i === 25 && targetGift) gift = targetGift;
-            html += `<div class="roulette-item">${gift.icon}<span class="label">${gift.price ? gift.price + '⭐' : ''}</span></div>`;
-        }
-        track.innerHTML = html;
-    }
 
     function startSpin() {
+        playClickSound();
+
         if (currentMode === 'upgrade') {
             executeUpgradeSpin();
             return;
@@ -628,18 +845,25 @@
                 cancelDuelSearch();
                 return;
             }
-            if (userStars < myChosenBet) {
-                showModal('⚠️', 'Ошибка ставки', 'Недостаточно средств на балансе!', false, false);
+
+            let inputVal = myChosenBet;
+            const spinBtnEl = document.getElementById('spin-btn');
+
+            if (inputVal < 25 || userStars < inputVal) {
+                spinBtnEl.classList.add('btn-error-shake');
+                setTimeout(() => spinBtnEl.classList.remove('btn-error-shake'), 400);
+                showModal('⚠️', 'Ошибка ставки', 'Недостаточно звезд или ставка ниже 25 ⭐!', false, false);
                 return;
             }
 
-            userStars -= myChosenBet;
+            userStars -= inputVal;
+            myChosenBet = inputVal;
             updateBalance();
 
             duelState = 'preparing';
-            const spinBtnEl = document.getElementById('spin-btn');
             spinBtnEl.innerText = 'Отмена';
             spinBtnEl.classList.add('cancel-mode');
+            setDuelControlsDisabled(true);
 
             let prepSec = 5;
             const statusEl = document.getElementById('duel-status-text');
@@ -737,18 +961,30 @@
             document.getElementById('opponent-roulette-track').style.transform = `translateX(${distance}px)`;
         }, 100);
 
+        let startTime = performance.now();
+        function tickAnimation(currentTime) {
+            let progress = (currentTime - startTime) / 4000;
+            if (progress < 1) {
+                playTickSound();
+                setTimeout(() => requestAnimationFrame(tickAnimation), 40 + (progress * progress * 350));
+            }
+        }
+        requestAnimationFrame(tickAnimation);
+
         setTimeout(() => {
+            playWinSound();
+
             if (isDraw || myGift.name === oppGift.name) {
                 userStars += myChosenBet;
                 updateBalance();
-                showModal('🤝', 'Ничья!', `Ставка (${myChosenBet} ⭐) возвращена.`, false, false, '', () => resetDuelInterfaceToDefault());
+                showModal('🤝', 'Ничья!', `Ставка (${myChosenBet} ⭐) возвращена на баланс.`, false, false, '', () => resetDuelInterfaceToDefault());
             } else if (isWinner) {
                 let winnings = myChosenBet * 2;
                 userStars += winnings;
                 updateBalance();
-                showModal('🏆', 'Победа! 🎉', `Зачислено +${winnings} ⭐.`, false, true, '', () => resetDuelInterfaceToDefault());
+                showModal('🏆', 'Победа! 🎉', `На ваш баланс зачислено +${winnings} ⭐.`, false, true, '', () => resetDuelInterfaceToDefault());
             } else {
-                showModal('🥺', 'ПОРАЖЕНИЕ', `Ставка сгорела.`, false, false, `Соперник победил!`, () => resetDuelInterfaceToDefault());
+                showModal('🥺', 'ПОРАЖЕНИЕ', `Ваша ставка сгорела.`, false, false, `Соперник ${opponentName} выиграл раунд!`, () => resetDuelInterfaceToDefault());
             }
         }, 4300);
     }
@@ -765,9 +1001,20 @@
             track.style.transform = `translateX(${distance}px)`;
         }, 50);
 
+        let startTime = performance.now();
+        function tickAnimation(currentTime) {
+            let progress = (currentTime - startTime) / 4000;
+            if (progress < 1) {
+                playTickSound();
+                setTimeout(() => requestAnimationFrame(tickAnimation), 40 + (progress * progress * 350));
+            }
+        }
+        requestAnimationFrame(tickAnimation);
+
         setTimeout(() => {
             isSpinning = false;
             document.getElementById('spin-btn').disabled = false;
+            playWinSound();
             let numericP = getNumericPrice(winningGift.name);
             let isNothing = (numericP === 0);
             if (!isNothing) {
@@ -806,14 +1053,15 @@
         });
     }
 
-    function withdrawGift() { showModal('🎁', 'Вывод', 'Перейдите в @givegiftfast', false, false); }
+    function withdrawGift() { showModal('🎁', 'Вывод предмета', 'Перейдите в канал @givegiftfast для получения.', false, false); }
     function sellGift(index) {
+        playClickSound();
         let pVal = inventory[index].numericPrice || getNumericPrice(inventory[index].name);
         userStars += pVal;
         updateBalance();
         inventory.splice(index, 1);
         saveInventory();
-        showModal('⭐', 'Продано!', `Продано за ${pVal} ⭐`, false, false);
+        showModal('⭐', 'Продано!', `Предмет успешно продан за ${pVal} ⭐.`, false, true);
     }
 
     let globalModalCloseCallback = null;
@@ -823,9 +1071,11 @@
         document.getElementById('modal-desc').innerText = desc;
         globalModalCloseCallback = onCloseCallback;
         
-        // Меняем текст кнопки на "УРА" при выигрыше или победе
+        const subDescEl = document.getElementById('modal-sub-desc');
+        if (subDesc) { subDescEl.innerText = subDesc; subDescEl.style.display = 'block'; } else { subDescEl.style.display = 'none'; }
+        
         const actionBtn = document.getElementById('modal-action-btn');
-        if (isWin || title.includes('Победа') || title.includes('Успех') || title.includes('Поздравляем')) {
+        if (isWin || title.includes('Победа') || title.includes('Успех') || title.includes('Поздравляем') || title.includes('Продано')) {
             actionBtn.innerText = 'УРА';
         } else {
             actionBtn.innerText = 'Закрыть';
@@ -835,6 +1085,7 @@
     }
 
     function closeModal() {
+        playClickSound();
         document.getElementById('result-modal').style.display = 'none';
         if (globalModalCloseCallback) {
             let cb = globalModalCloseCallback;
@@ -843,13 +1094,19 @@
         }
     }
 
-    function openDepositModal() { document.getElementById('deposit-modal').style.display = 'flex'; }
-    function closeDepositModal() { document.getElementById('deposit-modal').style.display = 'none'; }
+    function openDepositModal() { playClickSound(); document.getElementById('deposit-modal').style.display = 'flex'; }
+    function closeDepositModal() { playClickSound(); document.getElementById('deposit-modal').style.display = 'none'; }
+    function selectDeposit() {
+        playClickSound();
+        document.getElementById('deposit-info-box').style.display = 'block';
+        document.getElementById('deposit-info-box').innerHTML = 'Пишите в поддержку: <span class="deposit-link-clickable" onclick="openExternalUrl(\'https://t.me/frickhaus\')">@frickhaus</span>';
+    }
     function openExternalUrl(url) {
         const tg = window.Telegram?.WebApp;
         if (tg?.openTelegramLink) tg.openTelegramLink(url); else window.open(url, '_blank');
     }
     function switchScreen(screenName, btnEl) {
+        playClickSound();
         if (duelState === 'searching' || duelState === 'preparing') cancelDuelSearch();
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -857,12 +1114,33 @@
         btnEl.classList.add('active');
     }
     function saveProfile() {
+        playClickSound();
         username = document.getElementById('profile-name-input').value || 'Игрок';
         localStorage.setItem('tg_username', username);
         document.getElementById('header-username').innerText = '🎁 ' + username;
+        showModal('✅', 'Успешно!', 'Имя профиля обновлено.', false, true);
     }
     function copyToClipboard(id) {
+        playClickSound();
         navigator.clipboard.writeText(document.getElementById(id).value);
+        showModal('📋', 'Скопировано!', 'Текст сохранен в буфер обмена.', false, true);
+    }
+    function requestAdminAuth() { playClickSound(); document.getElementById('admin-auth-modal').style.display = 'flex'; }
+    function closeAdminAuthModal() { playClickSound(); document.getElementById('admin-auth-modal').style.display = 'none'; }
+    function verifyAdminPass() {
+        playClickSound();
+        if (document.getElementById('admin-pass-input').value === 'VLAD245FRICK929HAUS868BEZBELETNIK34') {
+            closeAdminAuthModal();
+            document.getElementById('admin-modal').style.display = 'flex';
+        } else { closeAdminAuthModal(); showModal('❌', 'Ошибка', 'Неверный пароль администратора!', false, false); }
+    }
+    function closeAdminModal() { playClickSound(); document.getElementById('admin-modal').style.display = 'none'; }
+    function adminSelfAddStars() {
+        playClickSound();
+        userStars += 1000;
+        updateBalance();
+        closeAdminModal();
+        showModal('⭐', 'Успешно!', '+1000 ⭐ начислено на ваш баланс!', false, true);
     }
 </script>
 </body>
