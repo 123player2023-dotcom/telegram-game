@@ -27,8 +27,23 @@
         .badge-dot { position: absolute; top: -2px; right: -6px; width: 10px; height: 10px; background-color: #ef4444; border-radius: 50%; border: 2px solid #202024; display: none; box-shadow: 0 0 8px #ef4444; }
         .badge-dot.active { display: block; }
         
-        .roulette-switcher { display: flex; gap: 4px; margin-bottom: 12px; width: 100%; max-width: 400px; flex-wrap: wrap; justify-content: center; }
-        .switch-tab { flex: 1; min-width: 30%; background: #27272a; border: 1px solid #3f3f46; color: #a1a1aa; padding: 7px 2px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor: pointer; text-align: center; position: relative; display: flex; align-items: center; justify-content: center; gap: 3px; }
+        .modes-menu-container { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 380px; align-items: center; }
+        .mode-card-btn { width: 100%; background: linear-gradient(135deg, #202024, #27272a); border: 1px solid #3f3f46; border-radius: 16px; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: transform 0.15s ease, border-color 0.2s; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        .mode-card-btn:active { transform: scale(0.97); }
+        .mode-card-btn:hover { border-color: #8b5cf6; }
+        .mode-card-left { display: flex; align-items: center; gap: 14px; }
+        .mode-icon-box { font-size: 32px; width: 50px; height: 50px; background: #18181b; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid #27272a; }
+        .mode-info { text-align: left; }
+        .mode-title { font-size: 16px; font-weight: 700; color: #ffffff; margin-bottom: 2px; }
+        .mode-desc { font-size: 11px; color: #a1a1aa; }
+        .mode-arrow { font-size: 18px; color: #71717a; font-weight: bold; }
+
+        .back-to-menu-row { width: 100%; max-width: 400px; display: flex; justify-content: flex-start; margin-bottom: 8px; }
+        .back-menu-btn { background: #27272a; border: 1px solid #3f3f46; color: #a78bfa; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .back-menu-btn:active { transform: scale(0.95); }
+
+        .roulette-switcher { display: flex; gap: 4px; margin-bottom: 8px; width: 100%; max-width: 400px; flex-wrap: wrap; justify-content: center; }
+        .switch-tab { flex: 1; min-width: 22%; background: #27272a; border: 1px solid #3f3f46; color: #a1a1aa; padding: 7px 2px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor: pointer; text-align: center; position: relative; display: flex; align-items: center; justify-content: center; gap: 3px; }
         .switch-tab.active { background: #8b5cf6; color: #ffffff; border-color: #a78bfa; }
         
         .info-badge-btn { 
@@ -165,24 +180,60 @@
     </div>
 
     <div class="content">
+        <!-- Главное меню с 3 кнопками режимов -->
         <div class="screen active" id="screen-main">
+            <div class="modes-menu-container">
+                <div style="font-size: 18px; font-weight: 700; color: #a78bfa; margin-bottom: 4px; text-align: center;">🎮 Выберите игровой режим</div>
+                <p style="font-size: 12px; color: #a1a1aa; margin-bottom: 12px; text-align: center;">Открывайте кейсы, сражайтесь в дуэлях или улучшайте предметы!</p>
+                
+                <div class="mode-card-btn" onclick="openModeScreen('cases')">
+                    <div class="mode-card-left">
+                        <div class="mode-icon-box">🎁</div>
+                        <div class="mode-info">
+                            <div class="mode-title">Кейсы с подарками</div>
+                            <div class="mode-desc">FREE, 25⭐, 50⭐ и 100⭐ кейсы</div>
+                        </div>
+                    </div>
+                    <div class="mode-arrow">➔</div>
+                </div>
+
+                <div class="mode-card-btn" onclick="openModeScreen('duel')">
+                    <div class="mode-card-left">
+                        <div class="mode-icon-box">⚔️</div>
+                        <div class="mode-info">
+                            <div class="mode-title">PvP Дуэль</div>
+                            <div class="mode-desc">Сражения против реальных игроков 2X</div>
+                        </div>
+                    </div>
+                    <div class="mode-arrow">➔</div>
+                </div>
+
+                <div class="mode-card-btn" onclick="openModeScreen('upgrade')">
+                    <div class="mode-card-left">
+                        <div class="mode-icon-box">📈</div>
+                        <div class="mode-info">
+                            <div class="mode-title">Апгрейд предметов</div>
+                            <div class="mode-desc">Улучшайте призы до желаемого подарка</div>
+                        </div>
+                    </div>
+                    <div class="mode-arrow">➔</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Независимый экран режима: КЕЙСЫ -->
+        <div class="screen" id="screen-cases">
+            <div class="back-to-menu-row">
+                <button class="back-menu-btn" onclick="backToMainScreen()">← Назад в меню</button>
+            </div>
             <div class="roulette-switcher">
                 <button class="switch-tab active" id="tab-paid" onclick="switchRouletteMode('paid')">🎁 25⭐</button>
                 <button class="switch-tab" id="tab-paid50" onclick="switchRouletteMode('paid50')">🎁 50⭐</button>
                 <button class="switch-tab" id="tab-paid100" onclick="switchRouletteMode('paid100')">🎁 100⭐</button>
-                <button class="switch-tab" id="tab-duel" onclick="switchRouletteMode('duel')">
-                    ⚔️ Дуэль
-                    <span class="info-badge-btn" onclick="event.stopPropagation(); openDuelInfoModal();">i</span>
-                </button>
-                <button class="switch-tab" id="tab-upgrade" onclick="switchRouletteMode('upgrade')">📈 Апгр.</button>
                 <button class="switch-tab" id="tab-free" onclick="switchRouletteMode('free')">⭐ FREE</button>
             </div>
 
             <div class="case-card" style="position: relative;">
-                <div class="countdown-overlay" id="countdown-overlay">
-                    <div class="countdown-number" id="countdown-num-display">3</div>
-                </div>
-
                 <h2 style="font-size: 17px; margin-bottom: 4px;" id="case-title">Подарочный кейс</h2>
                 <p style="font-size: 11px; color: #a1a1aa; margin-bottom: 8px;" id="case-desc">Испытай удачу и выиграй подарок!</p>
                 
@@ -191,7 +242,27 @@
                     <div class="roulette-track" id="roulette-track"></div>
                 </div>
 
-                <div id="duel-arena-box" style="display: none;">
+                <button class="btn" id="spin-btn" onclick="startSpin()">Крутить 25 ⭐</button>
+            </div>
+        </div>
+
+        <!-- Независимый экран режима: ДУЭЛЬ -->
+        <div class="screen" id="screen-duel">
+            <div class="back-to-menu-row">
+                <button class="back-menu-btn" onclick="backToMainScreen()">← Назад в меню</button>
+            </div>
+            <div class="case-card" style="position: relative;">
+                <div class="countdown-overlay" id="countdown-overlay">
+                    <div class="countdown-number" id="countdown-num-display">3</div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <h2 style="font-size: 17px;">PvP Дуэль</h2>
+                    <span class="info-badge-btn" onclick="openDuelInfoModal();">i</span>
+                </div>
+                <p style="font-size: 11px; color: #a1a1aa; margin-bottom: 8px;">Сражайтесь за ценные подарки 2X!</p>
+
+                <div id="duel-arena-box">
                     <div style="font-size: 12px; color: #a78bfa; text-align: left; margin-bottom: 2px;">🟢 Ваша рулетка <span id="my-live-bet" style="color: #fbbf24; float: right;">Ставка: 25 ⭐</span></div>
                     <div class="roulette-container">
                         <div class="roulette-pointer"></div>
@@ -205,7 +276,29 @@
                     </div>
                 </div>
 
-                <div id="upgrade-arena-box" style="display: none;" class="upgrade-arena">
+                <div id="duel-input-container" style="display: block; margin-top: 6px; margin-bottom: 4px;">
+                    <div class="duel-input-row">
+                        <button class="duel-step-btn" id="duel-minus-btn" onclick="adjustDuelBet(-10)">-</button>
+                        <div class="duel-bet-display" id="duel-bet-display-val">25 ⭐</div>
+                        <button class="duel-step-btn" id="duel-plus-btn" onclick="adjustDuelBet(10)">+</button>
+                    </div>
+                </div>
+
+                <div id="duel-status-text" style="font-size: 13px; color: #a78bfa; margin: 10px 0; display: none;">Поиск противника...</div>
+                <button class="btn" id="duel-spin-btn" onclick="startSpin()">Найти дуэль</button>
+            </div>
+        </div>
+
+        <!-- Независимый экран режима: АПГРЕЙД -->
+        <div class="screen" id="screen-upgrade">
+            <div class="back-to-menu-row">
+                <button class="back-menu-btn" onclick="backToMainScreen()">← Назад в меню</button>
+            </div>
+            <div class="case-card" style="position: relative;">
+                <h2 style="font-size: 17px; margin-bottom: 4px;">📈 Апгрейд предметов</h2>
+                <p style="font-size: 11px; color: #a1a1aa; margin-bottom: 8px;">Повышайте ценность ваших выигрышей!</p>
+
+                <div class="upgrade-arena">
                     <div class="upgrade-slots">
                         <div class="upgrade-slot" id="upgrade-from-slot" onclick="openItemSelectModal('from')">
                             <span style="font-size: 18px;">📦</span>
@@ -238,16 +331,7 @@
                     </div>
                 </div>
 
-                <div id="duel-input-container" style="display: none; margin-top: 6px; margin-bottom: 4px;">
-                    <div class="duel-input-row">
-                        <button class="duel-step-btn" id="duel-minus-btn" onclick="adjustDuelBet(-10)">-</button>
-                        <div class="duel-bet-display" id="duel-bet-display-val">25 ⭐</div>
-                        <button class="duel-step-btn" id="duel-plus-btn" onclick="adjustDuelBet(10)">+</button>
-                    </div>
-                </div>
-
-                <div id="duel-status-text" style="font-size: 13px; color: #a78bfa; margin: 10px 0; display: none;">Поиск противника...</div>
-                <button class="btn" id="spin-btn" onclick="startSpin()">Играть</button>
+                <button class="btn" id="upgrade-spin-btn" onclick="startSpin()">Сделать апгрейд</button>
             </div>
         </div>
 
@@ -335,7 +419,7 @@
     </div>
 
     <div class="nav-bar">
-        <button class="nav-btn active" onclick="switchScreen('main', this)"><span class="icon">🎁</span>Кейсы</button>
+        <button class="nav-btn active" id="nav-btn-main" onclick="switchScreen('main', this)"><span class="icon">🏠</span>Главная</button>
         <button class="nav-btn" onclick="switchScreen('inventory', this)"><span class="icon">🎒<div class="badge-dot" id="inventory-badge"></div></span>Инвентарь</button>
         <button class="nav-btn" onclick="switchScreen('referral', this)"><span class="icon">👥</span>Друзья</button>
         <button class="nav-btn" onclick="switchScreen('profile', this)"><span class="icon">👤</span>Профиль</button>
@@ -536,7 +620,6 @@
         } catch(e) {}
     }
 
-    // ПОДКЛЮЧЕНИЕ К ВАШЕМУ СЕРВЕРУ НА RENDER
     const socket = io('https://telegram-duel-server-t0w9.onrender.com');
 
     socket.on('duel_started', (data) => {
@@ -611,7 +694,6 @@
         }
     }
 
-    // Реальный шанс для кейса 50⭐ (без изменений)
     function getPaid50RandomItem() {
         const rand = Math.random() * 100;
         if (rand < 30) return giftsData[0]; 
@@ -627,37 +709,34 @@
         return giftsData[10]; 
     }
 
-    // Реальный шанс для кейса 100⭐ (строго по вашим прошлым правилам)
     function getPaid100RandomItem() {
         const rand = Math.random() * 100;
-        if (rand < 15) return giftsData[1];   // Сердце 15⭐ (15%)
-        if (rand < 30) return giftsData[2];   // Мишка 15⭐ (15%)
-        if (rand < 45) return giftsData[3];   // Подарочек 25⭐ (15%)
-        if (rand < 60) return giftsData[4];   // Букет 25⭐ (15%)
-        if (rand < 75) return giftsData[5];   // Шампанское 50⭐ (15%)
-        if (rand < 90) return giftsData[6];   // Ракета 50⭐ (15%)
-        if (rand < 94) return giftsData[7];   // Бриллиант 100⭐ (4%)
-        if (rand < 98) return giftsData[8];   // Кольцо 100⭐ (4%)
-        if (rand < 99) return giftsData[9];   // Звезды 150 (1%)
-        if (rand < 99.5) return giftsData[11]; // Звезды 250 (0.5%)
-        return giftsData[12];                 // Звезды 300 (0.5%)
+        if (rand < 15) return giftsData[1];
+        if (rand < 30) return giftsData[2];
+        if (rand < 45) return giftsData[3];
+        if (rand < 60) return giftsData[4];
+        if (rand < 75) return giftsData[5];
+        if (rand < 90) return giftsData[6];
+        if (rand < 94) return giftsData[7];
+        if (rand < 98) return giftsData[8];
+        if (rand < 99) return giftsData[9];
+        if (rand < 99.5) return giftsData[11];
+        return giftsData[12];
     }
 
-    // ВИЗУАЛЬНАЯ ПОДСЫПКА ДЛЯ КЕЙСА 50⭐ (чаще мелькают 150⭐ и 250⭐, но шанс выпадения реален выше)
     function getVisual50RandomItem() {
         const rand = Math.random() * 100;
-        if (rand < 12) return giftsData[9];   // Часто мелькают 150 ⭐
-        if (rand < 22) return giftsData[11];  // Часто мелькают 250 ⭐
-        return getPaid50RandomItem();         // В остальном обычный набор
+        if (rand < 12) return giftsData[9];
+        if (rand < 22) return giftsData[11];
+        return getPaid50RandomItem();
     }
 
-    // ВИЗУАЛЬНАЯ ПОДСЫПКА ДЛЯ КЕЙСА 100⭐ (чаще мелькают 150⭐, 250⭐ и 300⭐)
     function getVisual100RandomItem() {
         const rand = Math.random() * 100;
-        if (rand < 15) return giftsData[9];   // Часто мелькают 150 ⭐
-        if (rand < 27) return giftsData[11];  // Часто мелькают 250 ⭐
-        if (rand < 37) return giftsData[12];  // Часто мелькают 300 ⭐
-        return getPaid100RandomItem();        // В остальном реальные призы
+        if (rand < 15) return giftsData[9];
+        if (rand < 27) return giftsData[11];
+        if (rand < 37) return giftsData[12];
+        return getPaid100RandomItem();
     }
 
     function getFreeRandomItem() {
@@ -668,7 +747,6 @@
         return giftsData[3];
     }
 
-    // Функция для генерации ленты (подмешиваем фейк-мелькание только для ленты рулетки)
     function getVisualTrackItem() {
         if (currentMode === 'paid50') return getVisual50RandomItem();
         if (currentMode === 'paid100') return getVisual100RandomItem();
@@ -741,69 +819,73 @@
         document.getElementById('duel-plus-btn').disabled = state;
     }
 
+    function openModeScreen(modeKey) {
+        playClickSound();
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        
+        if (modeKey === 'cases') {
+            document.getElementById('screen-cases').classList.add('active');
+            switchRouletteMode('paid');
+        } else if (modeKey === 'duel') {
+            document.getElementById('screen-duel').classList.add('active');
+            resetDuelInterfaceToDefault();
+        } else if (modeKey === 'upgrade') {
+            document.getElementById('screen-upgrade').classList.add('active');
+            updateUpgradeChance();
+        }
+    }
+
+    function backToMainScreen() {
+        playClickSound();
+        if (isSpinning || isSearchingDuel) {
+            if (isSearchingDuel) cancelDuelSearch();
+            return;
+        }
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        document.getElementById('screen-main').classList.add('active');
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById('nav-btn-main').classList.add('active');
+    }
+
     function switchRouletteMode(mode) {
         playClickSound();
-        if (isSpinning || isSearchingDuel) return;
+        if (isSpinning) return;
         currentMode = mode;
         document.querySelectorAll('.switch-tab').forEach(el => el.classList.remove('active'));
         document.getElementById('tab-' + mode).classList.add('active');
 
         const spinBtn = document.getElementById('spin-btn');
-        const duelStatus = document.getElementById('duel-status-text');
-        const singleBox = document.getElementById('single-roulette-box');
-        const duelBox = document.getElementById('duel-arena-box');
-        const upgradeBox = document.getElementById('upgrade-arena-box');
-        const duelInputContainer = document.getElementById('duel-input-container');
-
-        singleBox.style.display = 'none';
-        duelBox.style.display = 'none';
-        upgradeBox.style.display = 'none';
-        duelStatus.style.display = 'none';
-        duelInputContainer.style.display = 'none';
         spinBtn.disabled = false;
-        spinBtn.classList.remove('cancel-mode');
 
-        if (mode === 'paid' || mode === 'paid50' || mode === 'paid100' || mode === 'free') {
-            if (mode === 'paid') document.getElementById('case-title').innerText = 'Подарочный кейс 25⭐';
-            if (mode === 'paid50') document.getElementById('case-title').innerText = 'Элитный кейс 50⭐';
-            if (mode === 'paid100') document.getElementById('case-title').innerText = 'Премиум кейс 100⭐';
-            if (mode === 'free') document.getElementById('case-title').innerText = 'FREE Кейс';
+        if (mode === 'paid') document.getElementById('case-title').innerText = 'Подарочный кейс 25⭐';
+        if (mode === 'paid50') document.getElementById('case-title').innerText = 'Элитный кейс 50⭐';
+        if (mode === 'paid100') document.getElementById('case-title').innerText = 'Премиум кейс 100⭐';
+        if (mode === 'free') document.getElementById('case-title').innerText = 'FREE Кейс';
 
-            if (mode === 'paid') spinBtn.innerText = 'Крутить 25 ⭐';
-            if (mode === 'paid50') spinBtn.innerText = 'Крутить 50 ⭐';
-            if (mode === 'paid100') spinBtn.innerText = 'Крутить 100 ⭐';
-            if (mode === 'free') spinBtn.innerText = 'Крутить Бесплатно';
+        if (mode === 'paid') spinBtn.innerText = 'Крутить 25 ⭐';
+        if (mode === 'paid50') spinBtn.innerText = 'Крутить 50 ⭐';
+        if (mode === 'paid100') spinBtn.innerText = 'Крутить 100 ⭐';
+        if (mode === 'free') spinBtn.innerText = 'Крутить Бесплатно';
 
-            singleBox.style.display = 'block';
-
-            if (mode === 'free') {
-                let lastFreeTime = parseInt(localStorage.getItem('tg_last_free_time') || '0');
-                let now = Date.now();
-                let cooldown = 24 * 60 * 60 * 1000;
-                if (now - lastFreeTime < cooldown) {
-                    spinBtn.disabled = true;
-                    let remaining = Math.ceil((cooldown - (now - lastFreeTime)) / 1000);
-                    let hours = Math.floor(remaining / 3600);
-                    let mins = Math.floor((remaining % 3600) / 60);
-                    spinBtn.innerText = `Доступно через ${hours}ч ${mins}м`;
-                }
+        if (mode === 'free') {
+            let lastFreeTime = parseInt(localStorage.getItem('tg_last_free_time') || '0');
+            let now = Date.now();
+            let cooldown = 24 * 60 * 60 * 1000;
+            if (now - lastFreeTime < cooldown) {
+                spinBtn.disabled = true;
+                let remaining = Math.ceil((cooldown - (now - lastFreeTime)) / 1000);
+                let hours = Math.floor(remaining / 3600);
+                let mins = Math.floor((remaining % 3600) / 60);
+                spinBtn.innerText = `Доступно через ${hours}ч ${mins}м`;
             }
-            buildTrack('roulette-track');
-        } else if (mode === 'duel') {
-            resetDuelInterfaceToDefault();
-        } else if (mode === 'upgrade') {
-            document.getElementById('case-title').innerText = '📈 Апгрейд';
-            spinBtn.innerText = 'Сделать апгрейд';
-            upgradeBox.style.display = 'flex';
-            updateUpgradeChance();
         }
+        buildTrack('roulette-track');
     }
 
     function resetDuelInterfaceToDefault() {
         isSearchingDuel = false;
-        document.getElementById('case-title').innerText = 'PvP Дуэль';
-        const spinBtn = document.getElementById('spin-btn');
-        spinBtn.innerText = 'Играть';
+        const spinBtn = document.getElementById('duel-spin-btn');
+        spinBtn.innerText = 'Найти дуэль';
         spinBtn.disabled = false;
         spinBtn.classList.remove('cancel-mode');
         document.getElementById('duel-arena-box').style.display = 'block';
@@ -849,8 +931,8 @@
         
         let html = '';
         for (let i = 0; i < 40; i++) {
-            let gift = getVisualTrackItem(); // Используем визуальную подсыпку для анимации
-            if (i === 25 && targetGift) gift = targetGift; // Итог выпадения выбирается честно из реальных шансов!
+            let gift = getVisualTrackItem();
+            if (i === 25 && targetGift) gift = targetGift;
             html += `<div class="roulette-item">${gift.icon}<span class="label">${gift.price ? gift.price + '⭐' : ''}</span></div>`;
         }
         track.innerHTML = html;
@@ -1013,16 +1095,22 @@
     }
 
     function startSpin() {
+        playCallSpin();
+    }
+
+    function playCallSpin() {
         playClickSound();
         
-        if (currentMode === 'duel' && isSearchingDuel) {
+        const activeScreen = document.querySelector('.screen.active').id;
+
+        if (activeScreen === 'screen-duel' && isSearchingDuel) {
             cancelDuelSearch();
             return;
         }
 
         if (isSpinning) return;
 
-        if (currentMode === 'free') {
+        if (activeScreen === 'screen-cases' && currentMode === 'free') {
             let lastFreeTime = parseInt(localStorage.getItem('tg_last_free_time') || '0');
             let now = Date.now();
             let cooldown = 24 * 60 * 60 * 1000;
@@ -1033,7 +1121,7 @@
             localStorage.setItem('tg_last_free_time', now);
         }
 
-        if (currentMode === 'upgrade') {
+        if (activeScreen === 'screen-upgrade') {
             let totalFromValue = upgradeFromItems.reduce((sum, item) => sum + (item.numericPrice || getNumericPrice(item.name)), 0) + upgradeExtraStars;
             if (totalFromValue <= 0 || !upgradeToItem) {
                 showModal('⚠️', 'Ошибка апгрейда', 'Выберите предметы или добавьте звезды, а также выберите желаемый подарок!', false, false);
@@ -1055,7 +1143,7 @@
             saveInventory();
 
             isSpinning = true;
-            document.getElementById('spin-btn').disabled = true;
+            document.getElementById('upgrade-spin-btn').disabled = true;
 
             let chance = calculateUpgradeChance();
             let isSuccess = (Math.random() * 100) <= chance;
@@ -1077,7 +1165,7 @@
 
             setTimeout(() => {
                 isSpinning = false;
-                document.getElementById('spin-btn').disabled = false;
+                document.getElementById('upgrade-spin-btn').disabled = false;
                 spinner.style.transition = 'none';
                 spinner.style.transform = `rotate(${finalDeg % 360}deg)`;
                 playWinSound();
@@ -1104,7 +1192,7 @@
             return;
         }
 
-        if (currentMode === 'paid' || currentMode === 'paid50' || currentMode === 'paid100') {
+        if (activeScreen === 'screen-cases') {
             let cost = 25;
             if (currentMode === 'paid50') cost = 50;
             if (currentMode === 'paid100') cost = 100;
@@ -1123,9 +1211,9 @@
             return;
         }
 
-        if (currentMode === 'duel') {
+        if (activeScreen === 'screen-duel') {
             let inputVal = myChosenBet;
-            const spinBtnEl = document.getElementById('spin-btn');
+            const spinBtnEl = document.getElementById('duel-spin-btn');
 
             if (inputVal < 25) {
                 spinBtnEl.classList.add('btn-error-shake');
@@ -1155,7 +1243,6 @@
             statusEl.style.display = 'block';
             statusEl.innerText = `Поиск противника онлайн...`;
 
-            // ОТПРАВЛЯЕМ ЗАПРОС НА СЕРВЕР ДЛЯ РЕАЛЬНОГО МАТЧМЕЙЧИНГА
             socket.emit('find_duel', {
                 username: username,
                 bet: myChosenBet
@@ -1228,7 +1315,7 @@
 
         setTimeout(() => {
             isSpinning = false;
-            document.getElementById('spin-btn').disabled = false;
+            document.getElementById('duel-spin-btn').disabled = false;
             document.getElementById('duel-status-text').style.display = 'none';
             playWinSound();
 
@@ -1465,7 +1552,7 @@
         const box = document.getElementById('deposit-info-box');
         box.style.display = 'block';
         if (type === 'sbp' || type === 'stars') {
-            box.innerHTML = 'На счет пополнения писать в поддержу:<br><span class="deposit-link-clickable" onclick="openExternalUrl(\'https://t.me/helpGiveGift_bot\')">👉 Написать (@helpGiveGift_bot)</span>';
+            box.innerHTML = 'На счет пополнения писать в поддержу:<br><span class="deposit-link-clickable" onclick="openExternalUrl(\'https://t.me/helpGiveGift_bot\')">👉 Написать @helpGiveGift_bot</span>';
         }
     }
 
