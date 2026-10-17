@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Telegram Gift Case Game</title>
+    <!-- Подключаем официальный Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://telegram-duel-server-t0w9.onrender.com/socket.io/socket.io.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
@@ -633,9 +635,18 @@
         startCountdownAndSpin(data.opponentName, data.isWinner, data.myGift, data.opponentGift);
     });
 
-    let userId = localStorage.getItem('tg_user_id') || 'user_' + Math.floor(Math.random() * 1000000);
+    // Инициализация Telegram WebApp и получение реального ID пользователя
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+        tg.ready();
+        tg.expand();
+    }
+    let telegramUser = tg?.initDataUnsafe?.user;
+
+    let userId = telegramUser ? telegramUser.id.toString() : (localStorage.getItem('tg_user_id') || 'user_' + Math.floor(Math.random() * 1000000));
     localStorage.setItem('tg_user_id', userId);
-    let username = localStorage.getItem('tg_username') || 'Игрок_' + userId.slice(-4);
+
+    let username = telegramUser ? (telegramUser.first_name || telegramUser.username || 'Игрок') : (localStorage.getItem('tg_username') || 'Игрок_' + userId.slice(-4));
     let userStars = parseInt(localStorage.getItem('tg_stars') || '25');
     let inventory = JSON.parse(localStorage.getItem('tg_inventory') || '[]');
     let referralList = JSON.parse(localStorage.getItem('tg_ref_list') || '[]');
@@ -764,7 +775,9 @@
         document.getElementById('header-username').innerText = '🎁 ' + username;
         document.getElementById('profile-id-input').value = userId;
         document.getElementById('profile-name-input').value = username;
-        document.getElementById('ref-link-input').value = 'https://t.me/giftcasebot?start=' + userId;
+        
+        // Указываем вашу правильную официальную ссылку через бота для рефералов
+        document.getElementById('ref-link-input').value = 'https://t.me/givegift_fast_bot/app?start=' + userId;
         
         buildTrack('roulette-track');
         renderInventory();
