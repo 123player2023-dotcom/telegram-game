@@ -10,7 +10,7 @@
         (function() {
             const savedTheme = localStorage.getItem('tg_game_theme') || 'theme-dark';
             document.documentElement.className = savedTheme;
-            document.documentElement.style.backgroundColor = savedTheme === 'theme-light' ? '#ffffff' : (savedTheme === 'theme-softgray' ? '#e2e8f0' : '#0f0f11');
+            document.documentElement.style.backgroundColor = savedTheme === 'theme-light' ? '#ffffff' : (savedTheme === 'theme-softgray' ? '#C0C0C0' : '#0f0f11');
         })();
     </script>
 
@@ -74,23 +74,23 @@
             --roulette-item-bg: #1c1917;
         }
 
-        /* Более насыщенная и глубокая Серая тема */
+        /* Серая тема: оттенок Silver (#C0C0C0, RGB 192, 192, 192) */
         html.theme-softgray, body.theme-softgray {
-            --bg-html: #cbd5e1;
-            --bg-container: #e2e8f0;
-            --bg-header: #cbd5e1;
-            --border-color: #94a3b8;
-            --text-main: #0f172a;
-            --text-muted: #475569;
-            --card-bg: #f1f5f9;
+            --bg-html: #a6a6a6;
+            --bg-container: #C0C0C0;
+            --bg-header: #b3b3b3;
+            --border-color: #8c8c8c;
+            --text-main: #1a1a1a;
+            --text-muted: #595959;
+            --card-bg: #d4d4d4;
             --accent-color: #6366f1;
             --accent-gradient: linear-gradient(135deg, #6366f1, #a855f7);
-            --input-bg: #e2e8f0;
-            --input-border: #cbd5e1;
-            --nav-bg: #cbd5e1;
-            --nav-inactive: #64748b;
-            --roulette-bg: #cbd5e1;
-            --roulette-item-bg: #f1f5f9;
+            --input-bg: #c9c9c9;
+            --input-border: #adadad;
+            --nav-bg: #b3b3b3;
+            --nav-inactive: #616161;
+            --roulette-bg: #b3b3b3;
+            --roulette-item-bg: #d4d4d4;
         }
 
         html.theme-light, body.theme-light {
@@ -549,7 +549,7 @@
                             <span class="theme-name">Янтарная</span>
                         </div>
                         <div class="theme-option" id="theme-btn-theme-softgray" onclick="changeTheme('theme-softgray')">
-                            <div class="theme-preview-circle" style="background: #f1f5f9; border-color: #94a3b8;"></div>
+                            <div class="theme-preview-circle" style="background: #C0C0C0; border-color: #8c8c8c;"></div>
                             <span class="theme-name">Серая</span>
                         </div>
                         <div class="theme-option" id="theme-btn-theme-light" onclick="changeTheme('theme-light')">
