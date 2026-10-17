@@ -270,7 +270,7 @@
         .ref-item-reward { color: #fbbf24; font-weight: 600; font-size: 11px; }
     </style>
 </head>
-<body class="theme-dark">
+<body>
 
 <div class="app-container">
     <div class="header">
@@ -811,7 +811,6 @@
         document.body.className = themeName;
         localStorage.setItem('tg_game_theme', themeName);
 
-        // Обновляем подсветку активной плашки темы в профиле
         document.querySelectorAll('.theme-option').forEach(el => {
             el.classList.remove('active');
         });
