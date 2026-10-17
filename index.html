@@ -624,7 +624,7 @@
     }
 
     // Подключение к локальному серверу по протоколу Socket.IO
-    const SERVER_URL = 'http://localhost:10000';
+    const SERVER_URL = 'https://telegram-game-server.onrender.com';
     const socket = io(SERVER_URL);
 
     socket.on('duel_started', (data) => {
