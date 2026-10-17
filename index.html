@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Telegram Gift Case Game</title>
     
-    <!-- Мгновенная установка темы ДО отрисовки страницы (чтобы не было белого мигания) -->
+    <!-- Мгновенная установка темы ДО отрисовки страницы (чтобы не было мигания) -->
     <script>
         (function() {
             const savedTheme = localStorage.getItem('tg_game_theme') || 'theme-dark';
             document.documentElement.className = savedTheme;
-            document.documentElement.style.backgroundColor = savedTheme === 'theme-light' ? '#ffffff' : (savedTheme === 'theme-softgray' ? '#C0C0C0' : '#0f0f11');
+            document.documentElement.style.backgroundColor = savedTheme === 'theme-light' ? '#ffffff' : (savedTheme === 'theme-softgray' ? '#1e1e20' : '#0f0f11');
         })();
     </script>
 
@@ -74,23 +74,23 @@
             --roulette-item-bg: #1c1917;
         }
 
-        /* Серая тема: оттенок Silver (#C0C0C0, RGB 192, 192, 192) */
+        /* Темно-серая / Графитовая тема (гармонирует с акцентом Silver #C0C0C0 в превью) */
         html.theme-softgray, body.theme-softgray {
-            --bg-html: #a6a6a6;
-            --bg-container: #C0C0C0;
-            --bg-header: #b3b3b3;
-            --border-color: #8c8c8c;
-            --text-main: #1a1a1a;
-            --text-muted: #595959;
-            --card-bg: #d4d4d4;
-            --accent-color: #6366f1;
-            --accent-gradient: linear-gradient(135deg, #6366f1, #a855f7);
-            --input-bg: #c9c9c9;
-            --input-border: #adadad;
-            --nav-bg: #b3b3b3;
-            --nav-inactive: #616161;
-            --roulette-bg: #b3b3b3;
-            --roulette-item-bg: #d4d4d4;
+            --bg-html: #121214;
+            --bg-container: #1e1e20;
+            --bg-header: #252528;
+            --border-color: #38383e;
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --card-bg: #2c2c30;
+            --accent-color: #8b5cf6;
+            --accent-gradient: linear-gradient(135deg, #8b5cf6, #ec4899);
+            --input-bg: #18181a;
+            --input-border: #3f3f46;
+            --nav-bg: #252528;
+            --nav-inactive: #8c8c93;
+            --roulette-bg: #151517;
+            --roulette-item-bg: #242428;
         }
 
         html.theme-light, body.theme-light {
@@ -549,7 +549,7 @@
                             <span class="theme-name">Янтарная</span>
                         </div>
                         <div class="theme-option" id="theme-btn-theme-softgray" onclick="changeTheme('theme-softgray')">
-                            <div class="theme-preview-circle" style="background: #C0C0C0; border-color: #8c8c8c;"></div>
+                            <div class="theme-preview-circle" style="background: #C0C0C0; border-color: #38383e;"></div>
                             <span class="theme-name">Серая</span>
                         </div>
                         <div class="theme-option" id="theme-btn-theme-light" onclick="changeTheme('theme-light')">
