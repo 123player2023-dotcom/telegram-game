@@ -658,7 +658,7 @@
     let referralList = JSON.parse(localStorage.getItem('tg_ref_list') || '[]');
     let paidCaseCount = parseInt(localStorage.getItem('tg_paid_case_count') || '0');
 
-    // Исправленная синхронизация с сервером (без повторной выдачи 25 звезд при каждом заведе)
+    // Исправленная синхронизация с сервером
     async function syncWithServer() {
         try {
             const response = await fetch(`${SERVER_URL}/api/login`, {
@@ -671,29 +671,28 @@
                 userStars = data.stars;
                 inventory = data.inventory || [];
                 
-                // Сохраняем актуальный баланс и забор первичной регистрации
+                // Сохраняем актуальный баланс
                 localStorage.setItem('tg_stars', userStars);
+                localStorage.setItem('tg_inventory', JSON.stringify(inventory));
                 localStorage.setItem('tg_user_registered', 'true');
                 
-                updateBalance();
+                updateBalanceUI();
                 renderInventory();
                 console.log('Синхронизировано с сервером. Баланс:', userStars);
             }
         } catch (e) {
             console.warn('Сервер временно недоступен, считываем локальные данные:', e);
             
-            // Если сервер еще просыпается, берём ранее сохранённый баланс
             if (localStorage.getItem('tg_stars') !== null) {
                 userStars = parseInt(localStorage.getItem('tg_stars'));
             } else {
-                // Если впервые зашли — даём 25 стартовых звёзд ровно 1 раз
                 userStars = 25;
                 localStorage.setItem('tg_stars', '25');
                 localStorage.setItem('tg_user_registered', 'true');
             }
             
             inventory = JSON.parse(localStorage.getItem('tg_inventory') || '[]');
-            updateBalance();
+            updateBalanceUI();
             renderInventory();
         }
     }
@@ -1440,15 +1439,38 @@
         }, 4200);
     }
 
-    function updateBalance() {
+    function updateBalanceUI() {
         document.getElementById('user-stars').innerText = userStars;
         localStorage.setItem('tg_stars', userStars);
     }
 
-    function saveInventory() {
+    async function updateBalance() {
+        updateBalanceUI();
+        try {
+            await fetch(`${SERVER_URL}/api/update-stars`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telegramId: userId, stars: userStars })
+            });
+        } catch (e) {
+            console.warn('Не удалось синхронизировать баланс с сервером:', e);
+        }
+    }
+
+    async function saveInventory() {
         localStorage.setItem('tg_inventory', JSON.stringify(inventory));
         document.getElementById('inventory-badge').classList.add('active');
         renderInventory();
+
+        try {
+            await fetch(`${SERVER_URL}/api/update-inventory`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telegramId: userId, inventory: inventory })
+            });
+        } catch (e) {
+            console.warn('Не удалось синхронизировать инвентарь с сервером:', e);
+        }
     }
 
     function renderInventory() {
