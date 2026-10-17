@@ -468,8 +468,8 @@
             <div style="font-size:17px; font-weight:600; margin-bottom:6px;">Пополнение баланса</div>
             <div style="font-size:12px; color:#a1a1aa;">Выберите удобный способ:</div>
             <div class="deposit-options">
-                <button class="deposit-option-btn" onclick="selectDeposit('sbp')">💳 Оплата через СБП</button>
                 <button class="deposit-option-btn" onclick="selectDeposit('stars')">⭐ Звездочки TG</button>
+                <button class="deposit-option-btn" onclick="selectDeposit('sbp')">💳 Оплата через СБП</button>
             </div>
             <div class="deposit-info-box" id="deposit-info-box"></div>
             <button class="close-btn" onclick="closeDepositModal()">Закрыть</button>
@@ -1625,12 +1625,56 @@
         document.getElementById('deposit-modal').style.display = 'none';
     }
 
+    // Обновленная функция выбора способа пополнения
     function selectDeposit(type) {
         playClickSound();
         const box = document.getElementById('deposit-info-box');
         box.style.display = 'block';
-        if (type === 'sbp' || type === 'stars') {
-            box.innerHTML = 'На счет пополнения писать в поддержу:<br><span class="deposit-link-clickable" onclick="openExternalUrl(\'https://t.me/helpGiveGift_bot\')">👉 Написать @helpGiveGift_bot</span>';
+        
+        if (type === 'stars') {
+            box.innerHTML = `
+                <div style="margin-bottom:8px; font-weight:600;">Выберите пакет звезд:</div>
+                <button class="btn" onclick="buyStarsWithTelegram(50)" style="margin-bottom:6px; background: linear-gradient(135deg, #f59e0b, #d97706);">Купить 50 ⭐</button>
+                <button class="btn" onclick="buyStarsWithTelegram(100)" style="background: linear-gradient(135deg, #f59e0b, #d97706);">Купить 100 ⭐</button>
+            `;
+        } else if (type === 'sbp') {
+            box.innerHTML = 'Пополнение через СБП временно недоступно. Используйте официальные Telegram Звезды ⭐.';
+        }
+    }
+
+    // Новая функция покупки Telegram Stars
+    async function buyStarsWithTelegram(amount) {
+        playClickSound();
+        try {
+            const res = await fetch(`${SERVER_URL}/api/create-invoice`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telegramId: userId, starsAmount: amount })
+            });
+            const data = await res.json();
+            
+            if (data.invoiceLink) {
+                const tg = window.Telegram?.WebApp;
+                if (tg && tg.openInvoice) {
+                    tg.openInvoice(data.invoiceLink, async (status) => {
+                        if (status === 'paid') {
+                            userStars += amount;
+                            await updateBalance();
+                            showModal('⭐', 'Успешно!', `Баланс пополнен на ${amount} ⭐!`, false, true);
+                            closeDepositModal();
+                        } else {
+                            showModal('❌', 'Отменено', 'Оплата была отменена.', false, false);
+                        }
+                    });
+                } else {
+                    window.open(data.invoiceLink, '_blank');
+                }
+            } else {
+                showModal('❌', 'Ошибка', data.error || 'Не удалось создать платеж.', false, false);
+            }
+        } catch (e) {
+            console.error(e);
+            showModal('❌', 'Ошибка', 'Ошибка соединения с сервером.', false, false);
         }
     }
 
