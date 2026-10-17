@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Telegram Gift Case Game</title>
-    <!-- Подключаем официальный Telegram WebApp SDK -->
+    <!-- Официальный SDK Telegram WebApp -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://telegram-duel-server-t0w9.onrender.com/socket.io/socket.io.js"></script>
+    <!-- Socket.IO клиент, подключенный к локальному серверу -->
+    <script src="http://localhost:10000/socket.io/socket.io.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
         html, body { width: 100%; height: 100%; overflow: hidden; background-color: #0f0f11; color: #ffffff; }
@@ -182,7 +183,7 @@
     </div>
 
     <div class="content">
-        <!-- Главное меню с 3 кнопками режимов -->
+        <!-- Главное меню -->
         <div class="screen active" id="screen-main">
             <div class="modes-menu-container">
                 <div style="font-size: 18px; font-weight: 700; color: #a78bfa; margin-bottom: 4px; text-align: center;">🎮 Выберите игровой режим</div>
@@ -223,7 +224,7 @@
             </div>
         </div>
 
-        <!-- Независимый экран режима: КЕЙСЫ -->
+        <!-- Экран: КЕЙСЫ -->
         <div class="screen" id="screen-cases">
             <div class="back-to-menu-row">
                 <button class="back-menu-btn" onclick="backToMainScreen()">← Назад в меню</button>
@@ -248,7 +249,7 @@
             </div>
         </div>
 
-        <!-- Независимый экран режима: ДУЭЛЬ -->
+        <!-- Экран: ДУЭЛЬ -->
         <div class="screen" id="screen-duel">
             <div class="back-to-menu-row">
                 <button class="back-menu-btn" onclick="backToMainScreen()">← Назад в меню</button>
@@ -291,7 +292,7 @@
             </div>
         </div>
 
-        <!-- Независимый экран режима: АПГРЕЙД -->
+        <!-- Экран: АПГРЕЙД -->
         <div class="screen" id="screen-upgrade">
             <div class="back-to-menu-row">
                 <button class="back-menu-btn" onclick="backToMainScreen()">← Назад в меню</button>
@@ -622,7 +623,9 @@
         } catch(e) {}
     }
 
-    const socket = io('https://telegram-duel-server-t0w9.onrender.com');
+    // Подключение к локальному серверу по протоколу Socket.IO
+    const SERVER_URL = 'http://localhost:10000';
+    const socket = io(SERVER_URL);
 
     socket.on('duel_started', (data) => {
         if (!isSearchingDuel) return;
@@ -635,7 +638,7 @@
         startCountdownAndSpin(data.opponentName, data.isWinner, data.myGift, data.opponentGift);
     });
 
-    // Инициализация Telegram WebApp и получение реального ID пользователя
+    // Инициализация Telegram WebApp SDK
     const tg = window.Telegram?.WebApp;
     if (tg) {
         tg.ready();
@@ -647,10 +650,36 @@
     localStorage.setItem('tg_user_id', userId);
 
     let username = telegramUser ? (telegramUser.first_name || telegramUser.username || 'Игрок') : (localStorage.getItem('tg_username') || 'Игрок_' + userId.slice(-4));
-    let userStars = parseInt(localStorage.getItem('tg_stars') || '25');
-    let inventory = JSON.parse(localStorage.getItem('tg_inventory') || '[]');
+    
+    let userStars = 25;
+    let inventory = [];
     let referralList = JSON.parse(localStorage.getItem('tg_ref_list') || '[]');
     let paidCaseCount = parseInt(localStorage.getItem('tg_paid_case_count') || '0');
+
+    // Авторизация и получение защищенного баланса с сервера
+    async function syncWithServer() {
+        try {
+            const response = await fetch(`${SERVER_URL}/api/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telegramId: userId, username: username })
+            });
+            const data = await response.json();
+            if (data && data.stars !== undefined) {
+                userStars = data.stars;
+                inventory = data.inventory || [];
+                updateBalance();
+                renderInventory();
+                console.log('Успешно синхронизировано с сервером. Баланс:', userStars);
+            }
+        } catch (e) {
+            console.warn('Сервер недоступен, работаем с локальным хранилищем:', e);
+            userStars = parseInt(localStorage.getItem('tg_stars') || '25');
+            inventory = JSON.parse(localStorage.getItem('tg_inventory') || '[]');
+            updateBalance();
+            renderInventory();
+        }
+    }
     
     let currentMode = 'paid';
     let isSpinning = false;
@@ -771,16 +800,13 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('user-stars').innerText = userStars;
         document.getElementById('header-username').innerText = '🎁 ' + username;
         document.getElementById('profile-id-input').value = userId;
         document.getElementById('profile-name-input').value = username;
-        
-        // Указываем вашу правильную официальную ссылку через бота для рефералов
         document.getElementById('ref-link-input').value = 'https://t.me/givegift_fast_bot/app?start=' + userId;
         
+        syncWithServer();
         buildTrack('roulette-track');
-        renderInventory();
         renderReferralStats();
         startBackgroundMusic();
     });
