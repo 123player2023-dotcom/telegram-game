@@ -122,7 +122,6 @@
         .deposit-options { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
         .deposit-option-btn { background: #18181b; border: 1px solid #3f3f46; color: #fff; padding: 10px; border-radius: 10px; font-size: 13px; cursor: pointer; }
         .deposit-info-box { background: #18181b; border: 1px solid #8b5cf6; padding: 12px; border-radius: 10px; color: #d8b4fe; font-size: 13px; margin: 10px 0; display: none; text-align: center; }
-        .deposit-link-clickable { color: #a78bfa; font-weight: 700; text-decoration: underline; cursor: pointer; display: inline-block; margin-top: 6px; }
         .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: none; justify-content: center; align-items: center; z-index: 100; }
         .modal-card { background: #202024; border: 1px solid #3f3f46; border-radius: 20px; padding: 20px; text-align: center; max-width: 320px; width: 88%; position: relative; }
         .modal-close-cross { position: absolute; top: 10px; right: 14px; font-size: 18px; color: #a1a1aa; cursor: pointer; }
@@ -335,6 +334,27 @@
                 </div>
 
                 <button class="btn" id="upgrade-spin-btn" onclick="startSpin()">Сделать апгрейд</button>
+            </div>
+        </div>
+
+        <!-- Экран: ПОКУПКА ЗВЕЗД (TELEGRAM STARS) -->
+        <div class="screen" id="screen-deposit-stars">
+            <div class="back-to-menu-row">
+                <button class="back-menu-btn" onclick="backToMainScreen()">← Назад в меню</button>
+            </div>
+            <div class="case-card" style="max-width: 400px; width: 100%;">
+                <h2 style="font-size: 17px; margin-bottom: 4px; color: #fbbf24;">⭐ Пополнение Telegram Stars</h2>
+                <p style="font-size: 11px; color: #a1a1aa; margin-bottom: 12px;">Выберите пакет для мгновенного пополнения:</p>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 100%;">
+                    <button class="btn" onclick="buyStarsWithTelegram(25)" style="margin-top:0; background: linear-gradient(135deg, #f59e0b, #d97706);">25 ⭐</button>
+                    <button class="btn" onclick="buyStarsWithTelegram(50)" style="margin-top:0; background: linear-gradient(135deg, #f59e0b, #d97706);">50 ⭐</button>
+                    <button class="btn" onclick="buyStarsWithTelegram(100)" style="margin-top:0; background: linear-gradient(135deg, #f59e0b, #d97706);">100 ⭐</button>
+                    <button class="btn" onclick="buyStarsWithTelegram(150)" style="margin-top:0; background: linear-gradient(135deg, #f59e0b, #d97706);">150 ⭐</button>
+                    <button class="btn" onclick="buyStarsWithTelegram(200)" style="margin-top:0; background: linear-gradient(135deg, #f59e0b, #d97706);">200 ⭐</button>
+                    <button class="btn" onclick="buyStarsWithTelegram(250)" style="margin-top:0; background: linear-gradient(135deg, #f59e0b, #d97706);">250 ⭐</button>
+                    <button class="btn" onclick="buyStarsWithTelegram(500)" style="margin-top:0; background: linear-gradient(135deg, #f59e0b, #d97706);">500 ⭐</button>
+                    <button class="btn" onclick="buyStarsWithTelegram(1000)" style="margin-top:0; background: linear-gradient(135deg, #f59e0b, #d97706);">1000 ⭐</button>
+                </div>
             </div>
         </div>
 
@@ -658,7 +678,6 @@
     let referralList = JSON.parse(localStorage.getItem('tg_ref_list') || '[]');
     let paidCaseCount = parseInt(localStorage.getItem('tg_paid_case_count') || '0');
 
-    // Исправленная синхронизация с сервером
     async function syncWithServer() {
         try {
             const response = await fetch(`${SERVER_URL}/api/login`, {
@@ -671,18 +690,14 @@
                 userStars = data.stars;
                 inventory = data.inventory || [];
                 
-                // Сохраняем актуальный баланс
                 localStorage.setItem('tg_stars', userStars);
                 localStorage.setItem('tg_inventory', JSON.stringify(inventory));
                 localStorage.setItem('tg_user_registered', 'true');
                 
                 updateBalanceUI();
                 renderInventory();
-                console.log('Синхронизировано с сервером. Баланс:', userStars);
             }
         } catch (e) {
-            console.warn('Сервер временно недоступен, считываем локальные данные:', e);
-            
             if (localStorage.getItem('tg_stars') !== null) {
                 userStars = parseInt(localStorage.getItem('tg_stars'));
             } else {
@@ -837,7 +852,7 @@
 
         const container = document.getElementById('ref-list-container');
         if (count === 0) {
-            container.innerHTML = '<div style="font-size: 11px; color: #71717a; text-align: center; padding: 12px 0;">Вы пока не пригласили друзей</div>';
+            container.innerHTML = '<div style="font-size: 11px; color: #71717a; text-align: center; padding: 12px 0;">Вы пока не приглашили друзей</div>';
         } else {
             let html = '';
             referralList.forEach(ref => {
@@ -1625,24 +1640,21 @@
         document.getElementById('deposit-modal').style.display = 'none';
     }
 
-    // Обновленная функция выбора способа пополнения
+    // Переход на независимый экран пополнения звезд
     function selectDeposit(type) {
         playClickSound();
-        const box = document.getElementById('deposit-info-box');
-        box.style.display = 'block';
-        
         if (type === 'stars') {
-            box.innerHTML = `
-                <div style="margin-bottom:8px; font-weight:600;">Выберите пакет звезд:</div>
-                <button class="btn" onclick="buyStarsWithTelegram(50)" style="margin-bottom:6px; background: linear-gradient(135deg, #f59e0b, #d97706);">Купить 50 ⭐</button>
-                <button class="btn" onclick="buyStarsWithTelegram(100)" style="background: linear-gradient(135deg, #f59e0b, #d97706);">Купить 100 ⭐</button>
-            `;
+            closeDepositModal();
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            document.getElementById('screen-deposit-stars').classList.add('active');
         } else if (type === 'sbp') {
+            const box = document.getElementById('deposit-info-box');
+            box.style.display = 'block';
             box.innerHTML = 'Пополнение через СБП временно недоступно. Используйте официальные Telegram Звезды ⭐.';
         }
     }
 
-    // Новая функция покупки Telegram Stars
+    // Покупка Telegram Stars через официальный API
     async function buyStarsWithTelegram(amount) {
         playClickSound();
         try {
@@ -1661,7 +1673,6 @@
                             userStars += amount;
                             await updateBalance();
                             showModal('⭐', 'Успешно!', `Баланс пополнен на ${amount} ⭐!`, false, true);
-                            closeDepositModal();
                         } else {
                             showModal('❌', 'Отменено', 'Оплата была отменена.', false, false);
                         }
