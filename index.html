@@ -658,7 +658,7 @@
     let referralList = JSON.parse(localStorage.getItem('tg_ref_list') || '[]');
     let paidCaseCount = parseInt(localStorage.getItem('tg_paid_case_count') || '0');
 
-    // Авторизация и получение защищенного баланса с сервера
+    // Исправленная синхронизация с сервером (без повторной выдачи 25 звезд при каждом заведе)
     async function syncWithServer() {
         try {
             const response = await fetch(`${SERVER_URL}/api/login`, {
@@ -670,13 +670,28 @@
             if (data && data.stars !== undefined) {
                 userStars = data.stars;
                 inventory = data.inventory || [];
+                
+                // Сохраняем актуальный баланс и забор первичной регистрации
+                localStorage.setItem('tg_stars', userStars);
+                localStorage.setItem('tg_user_registered', 'true');
+                
                 updateBalance();
                 renderInventory();
-                console.log('Успешно синхронизировано с сервером. Баланс:', userStars);
+                console.log('Синхронизировано с сервером. Баланс:', userStars);
             }
         } catch (e) {
-            console.warn('Сервер недоступен, работаем с локальным хранилищем:', e);
-            userStars = parseInt(localStorage.getItem('tg_stars') || '25');
+            console.warn('Сервер временно недоступен, считываем локальные данные:', e);
+            
+            // Если сервер еще просыпается, берём ранее сохранённый баланс
+            if (localStorage.getItem('tg_stars') !== null) {
+                userStars = parseInt(localStorage.getItem('tg_stars'));
+            } else {
+                // Если впервые зашли — даём 25 стартовых звёзд ровно 1 раз
+                userStars = 25;
+                localStorage.setItem('tg_stars', '25');
+                localStorage.setItem('tg_user_registered', 'true');
+            }
+            
             inventory = JSON.parse(localStorage.getItem('tg_inventory') || '[]');
             updateBalance();
             renderInventory();
