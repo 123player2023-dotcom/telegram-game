@@ -658,7 +658,7 @@
 
     let username = telegramUser ? (telegramUser.first_name || telegramUser.username || 'Игрок') : (localStorage.getItem('tg_username') || 'Игрок_' + userId.slice(-4));
 
-    // Подключение к облачному серверу Render по протоколу Socket.IO
+    // Подключение к облачному серверу Render
     const SERVER_URL = 'https://telegram-game-server.onrender.com';
     const socket = io(SERVER_URL);
 
@@ -725,19 +725,19 @@
     let selectTargetType = 'from';
 
     const giftsData = [
-        { name: "Ничего", icon: "❌", price: 0 },
-        { name: "Сердце", icon: "💖", price: 15 },
-        { name: "Мишка", icon: "🧸", price: 15 },
-        { name: "Подарочек", icon: "🎁", price: 25 },
-        { name: "Букет", icon: "💐", price: 25 },
-        { name: "Шампанское", icon: "🍾", price: 50 },
-        { name: "Ракета", icon: "🚀", price: 50 },
-        { name: "Бриллиант", icon: "💎", price: 100 },
-        { name: "Кольцо", icon: "💍", price: 100 },
-        { name: "Звезды 150", icon: "🌟", price: 150 },
-        { name: "Звезды 200", icon: "✨", price: 200 },
-        { name: "Звезды 250", icon: "💫", price: 250 },
-        { name: "Звезды 300", icon: "👑", price: 300 }
+        { name: "Ничего", icon: "❌", price: 0, giftId: null },
+        { name: "Сердце", icon: "💖", price: 15, giftId: "5170145012310081615" },
+        { name: "Мишка", icon: "🧸", price: 15, giftId: "5170233102089322756" },
+        { name: "Подарочек", icon: "🎁", price: 25, giftId: "5170250947678437525" },
+        { name: "Букет", icon: "💐", price: 25, giftId: "5168103777563050263" },
+        { name: "Шампанское", icon: "🍾", price: 50, giftId: "6028601630662853006" },
+        { name: "Ракета", icon: "🚀", price: 50, giftId: "5170564780938756245" },
+        { name: "Бриллиант", icon: "💎", price: 100, giftId: "5170521118301225164" },
+        { name: "Кольцо", icon: "💍", price: 100, giftId: "5170690322832818290" },
+        { name: "Звезды 150", icon: "🌟", price: 150, giftId: null },
+        { name: "Звезды 200", icon: "✨", price: 200, giftId: null },
+        { name: "Звезды 250", icon: "💫", price: 250, giftId: null },
+        { name: "Звезды 300", icon: "👑", price: 300, giftId: null }
     ];
 
     function getNumericPrice(giftName) {
@@ -852,7 +852,7 @@
 
         const container = document.getElementById('ref-list-container');
         if (count === 0) {
-            container.innerHTML = '<div style="font-size: 11px; color: #71717a; text-align: center; padding: 12px 0;">Вы пока не приглашили друзей</div>';
+            container.innerHTML = '<div style="font-size: 11px; color: #71717a; text-align: center; padding: 12px 0;">Вы пока не пригласили друзей</div>';
         } else {
             let html = '';
             referralList.forEach(ref => {
@@ -1243,7 +1243,7 @@
                 if (isSuccess) {
                     const uniqueId = Date.now() + Math.random();
                     localStorage.setItem(`item_cd_${uniqueId}`, Date.now() + 5 * 60 * 1000);
-                    inventory.push({ ...upgradeToItem, uniqueId: uniqueId, numericPrice: getNumericPrice(upgradeToItem.name) });
+                    inventory.push({ ...upgradeToItem, uniqueId: uniqueId, numericPrice: getNumericPrice(upgradeToItem.name), giftId: upgradeToItem.giftId });
                     saveInventory();
                     showModal('🎉', 'Апгрейд Успешен!', `Вы успешно апгрейдили на подарок "${upgradeToItem.name}"!`, false, true);
                 } else {
@@ -1446,7 +1446,12 @@
             if (!isNothing) {
                 const uniqueId = Date.now() + Math.random();
                 localStorage.setItem(`item_cd_${uniqueId}`, Date.now() + 5 * 60 * 1000);
-                inventory.push({ ...winningGift, uniqueId: uniqueId, numericPrice: numericP });
+                inventory.push({ 
+                    ...winningGift, 
+                    uniqueId: uniqueId, 
+                    numericPrice: numericP, 
+                    giftId: winningGift.giftId 
+                });
                 saveInventory();
             }
             
@@ -1557,10 +1562,30 @@
         }, 1000);
     }
 
-    function withdrawGift(index) {
+    // Функция автоматического вывода предмета из инвентаря
+    async function withdrawGift(index) {
         playClickSound();
         const item = inventory[index];
-        showModal('🎁', 'Вывод предмета', `Для вывода "${item.name}" перейдите в наш канал @givegiftfast.`, false, false);
+
+        try {
+            const res = await fetch(`${SERVER_URL}/api/withdraw-gift`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telegramId: userId, itemIndex: index })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                inventory = data.inventory;
+                saveInventory();
+                showModal('🎁', 'Успешный вывод!', `Подарок "${item.name}" успешно отправлен в ваш профиль Telegram!`, false, true);
+            } else {
+                showModal('❌', 'Ошибка вывода', data.error || 'Не удалось отправить подарок.', false, false);
+            }
+        } catch (e) {
+            console.error(e);
+            showModal('❌', 'Ошибка', 'Ошибка соединения с сервером.', false, false);
+        }
     }
 
     function sellGift(index) {
@@ -1640,7 +1665,6 @@
         document.getElementById('deposit-modal').style.display = 'none';
     }
 
-    // Переход на независимый экран пополнения звезд
     function selectDeposit(type) {
         playClickSound();
         if (type === 'stars') {
@@ -1654,7 +1678,6 @@
         }
     }
 
-    // Покупка Telegram Stars через официальный API
     async function buyStarsWithTelegram(amount) {
         playClickSound();
         try {
