@@ -4,13 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Telegram Gift Case Game</title>
+    
+    <!-- Мгновенная установка темы ДО отрисовки страницы (чтобы не было белого мигания) -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('tg_game_theme') || 'theme-dark';
+            document.documentElement.className = savedTheme;
+            document.documentElement.style.backgroundColor = savedTheme === 'theme-light' ? '#ffffff' : (savedTheme === 'theme-softgray' ? '#f1f5f9' : '#0f0f11');
+        })();
+    </script>
+
     <!-- Официальный SDK Telegram WebApp -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <!-- Socket.IO клиент c сервера Render -->
     <script src="https://telegram-game-server.onrender.com/socket.io/socket.io.js"></script>
     <style>
-        /* Определение цветовых тем через CSS переменные */
-        :root.theme-dark {
+        /* Определение цветовых тем через CSS переменные на html и body */
+        html.theme-dark, body.theme-dark {
             --bg-html: #0f0f11;
             --bg-container: #18181b;
             --bg-header: #202024;
@@ -28,7 +38,7 @@
             --roulette-item-bg: #18181b;
         }
 
-        :root.theme-midnight {
+        html.theme-midnight, body.theme-midnight {
             --bg-html: #030712;
             --bg-container: #0b0f19;
             --bg-header: #111827;
@@ -46,7 +56,7 @@
             --roulette-item-bg: #111827;
         }
 
-        :root.theme-amber {
+        html.theme-amber, body.theme-amber {
             --bg-html: #141210;
             --bg-container: #1c1917;
             --bg-header: #292524;
@@ -64,7 +74,7 @@
             --roulette-item-bg: #1c1917;
         }
 
-        :root.theme-softgray {
+        html.theme-softgray, body.theme-softgray {
             --bg-html: #f1f5f9;
             --bg-container: #ffffff;
             --bg-header: #f8fafc;
@@ -82,7 +92,7 @@
             --roulette-item-bg: #ffffff;
         }
 
-        :root.theme-light {
+        html.theme-light, body.theme-light {
             --bg-html: #ffffff;
             --bg-container: #ffffff;
             --bg-header: #f9fafb;
@@ -805,9 +815,10 @@
     let referralList = JSON.parse(localStorage.getItem('tg_ref_list') || '[]');
     let paidCaseCount = parseInt(localStorage.getItem('tg_paid_case_count') || '0');
 
-    // Мгновенная смена темы интерфейса
+    // Мгновенная смена темы интерфейса (на html и body одновременно)
     function changeTheme(themeName) {
         playClickSound();
+        document.documentElement.className = themeName;
         document.body.className = themeName;
         localStorage.setItem('tg_game_theme', themeName);
 
@@ -823,6 +834,7 @@
     // Загрузка сохраненной темы при старте
     function loadSavedTheme() {
         const savedTheme = localStorage.getItem('tg_game_theme') || 'theme-dark';
+        document.documentElement.className = savedTheme;
         document.body.className = savedTheme;
         
         document.querySelectorAll('.theme-option').forEach(el => {
